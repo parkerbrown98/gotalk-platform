@@ -21,8 +21,23 @@ docker run -p 8080:8080 gotalk-platform
 ```
 
 The [Dockerfile](../Dockerfile) builds the site and copies the production dependencies into a `node:24-slim`
-image that runs as the `node` user on port 8080. It has a `HEALTHCHECK` against `/healthz`. CI builds the image
-on every change but does not push it.
+image that runs as the `node` user on port 8080. It has a `HEALTHCHECK` against `/healthz`.
+
+CI builds the image on every change. From `main` and from `v*` tags it pushes a multi-arch image (amd64 and arm64)
+to the GitHub Container Registry, after the site checks pass:
+
+| Tag | Published from |
+| --- | --- |
+| `ghcr.io/parkerbrown98/gotalk-platform:edge` | Every push to `main` |
+| `ghcr.io/parkerbrown98/gotalk-platform:sha-<commit>` | Every push to `main` or a tag, to pin a deploy |
+| `ghcr.io/parkerbrown98/gotalk-platform:1.2.3`, `:1.2` | A `v1.2.3` tag |
+
+```sh
+docker run -p 8080:8080 ghcr.io/parkerbrown98/gotalk-platform:edge
+```
+
+The published image uses the default build arguments (production `SITE_URL`, indexing allowed). Build a staging
+image yourself, as shown under [Staging](#staging).
 
 ## Configuration
 
