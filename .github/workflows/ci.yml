@@ -29,7 +29,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test
+      # The token only raises the rate limit for the build-time release snapshot.
       - run: pnpm build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: pnpm check:links
 
   docker:

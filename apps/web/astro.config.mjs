@@ -3,6 +3,7 @@ import node from '@astrojs/node';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
 
+import gotalkReleases from './integrations/releases.mjs';
 import gotalkTokens from './integrations/tokens.mjs';
 
 const site = process.env.SITE_URL ?? 'https://gotalk.sh';
@@ -17,6 +18,7 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [
     gotalkTokens(),
+    gotalkReleases(),
     sitemap({
       filter: (page) => !/\/404\/?$/.test(page),
     }),
