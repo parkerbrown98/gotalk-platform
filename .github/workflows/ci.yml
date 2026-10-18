@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   web:
-    name: format, lint, check, build, links
+    name: format, lint, check, test, build, links
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +28,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm check
+      - run: pnpm test
       - run: pnpm build
       - run: pnpm check:links
 

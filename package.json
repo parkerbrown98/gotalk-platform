@@ -11,11 +11,12 @@
     "build": "pnpm --filter @gotalk-platform/web build",
     "preview": "pnpm --filter @gotalk-platform/web preview",
     "check": "pnpm --filter @gotalk-platform/web check",
+    "test": "pnpm --filter @gotalk-platform/web test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:links": "node scripts/check-links.mjs apps/web/dist/client",
-    "verify": "pnpm format:check && pnpm lint && pnpm check && pnpm build && pnpm check:links"
+    "verify": "pnpm format:check && pnpm lint && pnpm check && pnpm test && pnpm build && pnpm check:links"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

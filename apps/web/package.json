@@ -7,6 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "vitest run --project unit",
     "start": "node dist/server/entry.mjs",
     "capture:screens": "node scripts/capture-screens.mjs",
     "build:brand": "node scripts/build-brand.mjs"
@@ -16,11 +17,14 @@
     "@astrojs/sitemap": "^3.7.4",
     "@gotalk/tokens": "github:parkerbrown98/gotalk-client#2eab567db7af7824a6f93be3ef8b08150c10f54a&path:/packages/tokens",
     "astro": "^7.4.0",
+    "markdown-it": "^15.0.3",
     "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/markdown-it": "^14.2.0",
     "playwright": "^1.64.1",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
   }
 }

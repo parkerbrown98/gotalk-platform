@@ -1,5 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
+  // integrations/releases.mjs imports src/lib/releases with Node's built-in type stripping.
+  "compilerOptions": { "erasableSyntaxOnly": true },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"]
 }
