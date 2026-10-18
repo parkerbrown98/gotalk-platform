@@ -13,12 +13,14 @@ Gotalk is in beta. The server and push gateway are licensed under the GNU AGPL-3
 - [Home](${site.url}/): what Gotalk is
 - [Features](${site.url}/features): forums, feeds and search, chat, voice, moderation, developer API, self-hosting
 - [Open source](${site.url}/open-source): repositories, licenses, contributing
+- [Changelog](${site.url}/changelog): release notes for the apps and server
 
 ## Get Gotalk
 
-- [Desktop downloads](${links.downloads}): Windows, macOS and Linux
+- [Download](${site.url}/download): desktop apps for Windows, macOS and Linux, with checksums
 - [Web app](${site.appUrl})
-- [Host a server](${links.serverGettingStarted})
+- [Host your own server](${site.url}/self-host): Docker Compose, binaries, container image, Kubernetes
+- [Server getting-started guide](${links.serverGettingStarted})
 
 ## Source and documentation
 

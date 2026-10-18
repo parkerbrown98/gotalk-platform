@@ -1,0 +1,28 @@
+---
+interface Props {
+  fetchedAt: Date | null;
+  releasesUrl: string;
+}
+
+// Shown when the last refresh from GitHub failed, so the page says how old its list is.
+const { fetchedAt, releasesUrl } = Astro.props;
+const when = fetchedAt?.toLocaleString('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'UTC',
+});
+---
+
+<p class="stale small" role="status">
+  We couldn't reach GitHub just now{when ? `, so this list is as of ${when} UTC` : ''}. The newest releases
+  are always on <a href={releasesUrl}>GitHub</a>.
+</p>
+
+<style>
+  .stale {
+    padding: 10px 14px;
+    border: 1px solid var(--gt-color-hairline);
+    border-radius: var(--gt-radius-md);
+    background: var(--gt-color-surface);
+  }
+</style>

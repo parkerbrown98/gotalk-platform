@@ -21,6 +21,8 @@ export default defineConfig({
     gotalkReleases(),
     sitemap({
       filter: (page) => !/\/404\/?$/.test(page),
+      // Pages rendered on demand are not discovered by the sitemap integration.
+      customPages: ['/download', '/self-host', '/changelog'].map((path) => new URL(path, site).href),
     }),
   ],
   fonts: [

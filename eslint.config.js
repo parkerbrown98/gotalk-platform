@@ -30,6 +30,6 @@ export default defineConfig(
   {
     // Safari drops list semantics from lists styled with `list-style: none` unless role="list" is set.
     files: ['**/*.astro'],
-    rules: { 'astro/jsx-a11y/no-redundant-roles': ['error', { ul: ['list'] }] },
+    rules: { 'astro/jsx-a11y/no-redundant-roles': ['error', { ul: ['list'], ol: ['list'] }] },
   },
 );

@@ -19,11 +19,18 @@ export const site = {
   github,
 } as const;
 
-// External destinations. `downloads` points at GitHub until /download exists (platform plan, Phase 2).
-// Releases are pre-releases for now, which GitHub's /releases/latest skips, so this is the full list.
+// Destinations used across pages. The GitHub release pages are full lists, not /releases/latest, which
+// skips pre-releases.
 export const links = {
-  downloads: `${repos.client}/releases`,
+  downloads: '/download',
+  selfHost: '/self-host',
+  changelog: '/changelog',
+  clientReleases: `${repos.client}/releases`,
   serverReleases: `${repos.server}/releases`,
+  serverImage: 'ghcr.io/parkerbrown98/gotalk-server',
+  helmChart: `${repos.server}/tree/main/deploy/helm/gotalk`,
+  kustomize: `${repos.server}/tree/main/deploy/kubernetes`,
+  cli: `${serverDocs}/cli.md`,
   serverGettingStarted: `${serverDocs}/getting-started.md`,
   serverDocs: `${serverDocs}/README.md`,
   deployment: `${serverDocs}/deployment.md`,
@@ -39,12 +46,13 @@ export const links = {
   apiDevelopers: `${serverDocs}/api-developers.md`,
   serverDevelopment: `${serverDocs}/development.md`,
   clientDevelopment: `${repos.client}/blob/main/docs/development.md`,
-  clientReleases: `${repos.client}/blob/main/docs/releases.md`,
+  clientReleaseDocs: `${repos.client}/blob/main/docs/releases.md`,
   gatewayContributing: `${repos.gateway}/blob/main/CONTRIBUTING.md`,
 } as const;
 
 export const nav = [
   { href: '/features', label: 'Features' },
+  { href: '/self-host', label: 'Self-host' },
   { href: '/open-source', label: 'Open source' },
   { href: links.serverDocs, label: 'Docs' },
 ] as const;

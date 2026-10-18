@@ -1,0 +1,86 @@
+---
+import type { Download } from '../lib/releases/assets.ts';
+import { formatSize } from '../lib/releases/assets.ts';
+
+interface Props {
+  downloads: Download[];
+}
+
+// One row per file: label, type and size, the download link, and its SHA-256 when GitHub has one.
+const { downloads } = Astro.props;
+---
+
+<ul class="files" role="list">
+  {downloads.map((d) => (
+    <li class="file">
+      <a class="file-link" href={d.asset.url}>
+        <span class="file-label">{d.label}</span>
+        <span class="file-meta">
+          {d.format} · {formatSize(d.asset.size)}
+        </span>
+      </a>
+      {d.asset.sha256 && (
+        <details class="sha">
+          <summary>SHA-256</summary>
+          <code>{d.asset.sha256}</code>
+        </details>
+      )}
+    </li>
+  ))}
+</ul>
+
+<style>
+  .files {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--gt-space-sm);
+  }
+
+  .file {
+    display: grid;
+    gap: 2px;
+  }
+
+  .file-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px var(--gt-space-md);
+    padding: 10px 12px;
+    border: 1px solid var(--gt-color-hairline);
+    border-radius: var(--gt-radius-md);
+    color: var(--gt-color-ink);
+    text-decoration: none;
+  }
+
+  .file-link:hover {
+    background: var(--gt-color-surface-elevated);
+  }
+
+  .file-label {
+    font-weight: 500;
+  }
+
+  .file-meta {
+    color: var(--gt-color-mute);
+    font-size: var(--gt-type-body-sm-size);
+  }
+
+  .sha summary {
+    cursor: pointer;
+    width: fit-content;
+    padding: 6px 12px;
+    color: var(--gt-color-mute);
+    font-size: var(--gt-type-caption-md-size);
+  }
+
+  .sha code {
+    display: block;
+    margin: 0 12px 6px;
+    overflow-wrap: anywhere;
+    font-size: var(--gt-type-caption-md-size);
+  }
+</style>

@@ -1,0 +1,299 @@
+---
+import FileList from '../components/FileList.astro';
+import Icon from '../components/Icon.astro';
+import StaleNotice from '../components/StaleNotice.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { classifyClientAsset, downloadsByOs, osNames, selectRelease } from '../lib/releases/assets.ts';
+import { releaseCacheControl, releaseStore } from '../lib/releases/index.ts';
+import { links, site } from '../lib/site';
+
+// Rendered on demand from the release cache, so a new client release shows up without a deploy.
+export const prerender = false;
+
+const view = await releaseStore().get('client');
+const wanted = Astro.url.searchParams.get('channel') === 'beta' ? 'beta' : 'stable';
+const { release, channel, hasChoice } = selectRelease(view.releases, classifyClientAsset, wanted);
+const groups = release ? downloadsByOs(release, classifyClientAsset) : [];
+Astro.response.headers.set('Cache-Control', releaseCacheControl(Boolean(release)));
+
+const released = release
+  ? new Date(release.publishedAt).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })
+  : undefined;
+
+// The primary file per OS and architecture, for the detection script. Without JavaScript the button
+// points at the list below.
+const primaries = Object.fromEntries(
+  groups.flatMap((g) =>
+    g.downloads
+      .filter((d) => d.primary)
+      .map((d) => [
+        `${d.os}-${d.arch}`,
+        {
+          url: d.asset.url,
+          label: `Download for ${osNames[d.os]}${d.os === 'macos' ? ` (${d.label})` : ''}`,
+        },
+      ]),
+  ),
+);
+
+const notes: Record<string, { text: string; code?: string }> = {
+  macos: { text: 'Signed and notarized by Apple. Open the .dmg and drag Gotalk to Applications.' },
+  windows: {
+    text: 'The installers are not signed yet, so Windows SmartScreen may warn the first time you open one. Choose More info, then Run anyway.',
+  },
+  linux: { text: 'Make the AppImage executable before you run it:', code: 'chmod +x Gotalk_*.AppImage' },
+};
+
+const jsonLd = release
+  ? [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: site.name,
+        applicationCategory: 'CommunicationApplication',
+        operatingSystem: groups.map((g) => osNames[g.os]).join(', '),
+        softwareVersion: release.version,
+        datePublished: release.publishedAt,
+        downloadUrl: new URL('/download', Astro.site ?? site.url).href,
+        releaseNotes: release.url,
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        publisher: { '@id': `${site.url}/#organization` },
+      },
+    ]
+  : [];
+---
+
+<BaseLayout
+  title="Download Gotalk for macOS, Windows and Linux"
+  description="Get the Gotalk desktop app or open it in your browser. Free and open source."
+  jsonLd={jsonLd}
+>
+  <header class="page-header">
+    <div class="container head">
+      <h1 class="title">Download Gotalk</h1>
+      <p class="lede">The desktop app for macOS, Windows and Linux, or the same app in your browser.</p>
+      <div class="actions">
+        <a
+          class="button button-primary"
+          id="primary-download"
+          href="#desktop"
+          data-downloads={JSON.stringify(primaries)}
+          data-web={site.appUrl}
+        >
+          <Icon name="download" />
+          <span>Choose your download</span>
+        </a>
+        <a class="button button-secondary" href={site.appUrl}>
+          Open the web app
+        </a>
+      </div>
+      {release ? (
+        <p class="version small mute">
+          {channel === 'beta' && <span class="badge">Beta</span>} Version {release.version}, released{' '}
+          {released}. <a href={release.url}>Release notes</a> · <a href={links.changelog}>Changelog</a> ·{' '}
+          <a href={links.clientReleases}>All releases</a>
+        </p>
+      ) : null}
+      {hasChoice && (
+        <p class="small mute">
+          {channel === 'beta' ? (
+            <>
+              You're looking at the beta. <a href="/download">Get the stable release</a>
+            </>
+          ) : (
+            <>
+              A newer beta is available. <a href="/download?channel=beta">Try the beta</a>
+            </>
+          )}
+        </p>
+      )}
+      {view.stale && <StaleNotice fetchedAt={view.fetchedAt} releasesUrl={links.clientReleases} />}
+    </div>
+  </header>
+
+  <section class="section" id="desktop" aria-labelledby="desktop-title">
+    <div class="container">
+      <h2 id="desktop-title" class="heading">
+        Desktop
+      </h2>
+      {release ? (
+        <>
+          {channel === 'beta' && !hasChoice && (
+            <p class="mute intro">Gotalk is in beta, so every release so far is a pre-release.</p>
+          )}
+          <ul class="grid-3 platforms" role="list">
+            {groups.map((g) => (
+              <li class="card platform" id={g.os}>
+                <h3 class="heading-sm">{osNames[g.os]}</h3>
+                <FileList downloads={g.downloads} />
+                <p class="small mute">
+                  {notes[g.os].text} {notes[g.os].code && <code>{notes[g.os].code}</code>}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div class="card unavailable">
+          <p>
+            The download list is unavailable right now. Every installer is on the{' '}
+            <a href={links.clientReleases}>GitHub releases page</a>.
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="other-title">
+    <div class="container">
+      <h2 id="other-title" class="heading">
+        Web and mobile
+      </h2>
+      <ul class="grid-2 platforms" role="list">
+        <li class="card platform">
+          <h3 class="heading-sm">Web</h3>
+          <p class="mute">
+            The same app runs in your browser at <a href={site.appUrl}>{new URL(site.appUrl).host}</a>, with
+            nothing to install.
+          </p>
+          <p>
+            <a class="button button-secondary" href={site.appUrl}>
+              Open the web app
+            </a>
+          </p>
+        </li>
+        <li class="card platform">
+          <h3 class="heading-sm">iOS and Android</h3>
+          <p class="mute">
+            The mobile apps are on the way, built from the same code as the desktop app. Until then, the web
+            app works on your phone's browser.
+          </p>
+        </li>
+      </ul>
+      <p class="mute official">
+        No server yet? Every app can join Gotalk Official at <code>{site.officialInstance}</code>, open to
+        everyone, or <a href={links.selfHost}>host your own server</a>.
+      </p>
+    </div>
+  </section>
+
+  {release && (
+    <section class="section" id="verify" aria-labelledby="verify-title">
+      <div class="container prose-column">
+        <h2 id="verify-title" class="heading">
+          Check your download
+        </h2>
+        <p class="mute">
+          Each file lists the SHA-256 checksum GitHub computed when it was uploaded. Compare it with the
+          checksum of the file you downloaded:
+        </p>
+        <pre class="code"><code><span class="comment"># macOS and Linux</span>
+shasum -a 256 Gotalk_*
+
+<span class="comment"># Windows (PowerShell)</span>
+Get-FileHash .\Gotalk_*.exe</code></pre>
+      </div>
+    </section>
+  )}
+</BaseLayout>
+
+<script>
+  // Points the primary button at the installer for this computer. Without JavaScript it links to the list.
+  type Primary = { url: string; label: string };
+
+  async function detect(): Promise<string | null> {
+    const ua = navigator.userAgent;
+    if (/Android|iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+      return 'mobile';
+    }
+    const os = /Windows/.test(ua)
+      ? 'windows'
+      : /Macintosh|Mac OS X/.test(ua)
+        ? 'macos'
+        : /Linux|X11/.test(ua)
+          ? 'linux'
+          : null;
+    if (!os) return null;
+    // Browsers report Intel on every Mac; Chromium can tell the real architecture.
+    let arch = os === 'macos' ? 'arm64' : /aarch64|arm64/i.test(ua) ? 'arm64' : 'x64';
+    const uaData = (
+      navigator as Navigator & {
+        userAgentData?: { getHighEntropyValues(hints: string[]): Promise<{ architecture?: string }> };
+      }
+    ).userAgentData;
+    try {
+      const { architecture } = (await uaData?.getHighEntropyValues(['architecture'])) ?? {};
+      if (architecture === 'arm') arch = 'arm64';
+      else if (architecture === 'x86') arch = 'x64';
+    } catch {
+      // Keep the guess.
+    }
+    return `${os}-${arch}`;
+  }
+
+  const button = document.getElementById('primary-download') as HTMLAnchorElement | null;
+  if (button) {
+    const downloads = JSON.parse(button.dataset.downloads ?? '{}') as Record<string, Primary>;
+    const label = button.querySelector('span');
+    detect().then((key) => {
+      if (key === 'mobile' && button.dataset.web) {
+        button.href = button.dataset.web;
+        if (label) label.textContent = 'Open the web app';
+        return;
+      }
+      // Windows on ARM runs the x64 installer.
+      const match = key
+        ? (downloads[key] ?? (key.startsWith('windows') ? downloads['windows-x64'] : undefined))
+        : undefined;
+      if (match) {
+        button.href = match.url;
+        if (label) label.textContent = match.label;
+      }
+    });
+  }
+</script>
+
+<style>
+  .page-header {
+    padding-block: 80px 48px;
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .head {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .version .badge {
+    margin-right: 4px;
+  }
+
+  .intro {
+    margin-top: var(--gt-space-md);
+  }
+
+  .platforms {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--gt-space-xl);
+  }
+
+  .platform {
+    display: grid;
+    gap: var(--gt-space-md);
+    align-content: start;
+  }
+
+  .unavailable {
+    margin-top: var(--gt-space-xl);
+  }
+
+  .official {
+    margin-top: var(--gt-space-xl);
+  }
+
+  #verify .code {
+    margin-top: var(--gt-space-md);
+  }
+</style>

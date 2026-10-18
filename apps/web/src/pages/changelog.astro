@@ -1,0 +1,213 @@
+---
+import StaleNotice from '../components/StaleNotice.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { releaseCacheControl, releaseStore } from '../lib/releases/index.ts';
+import { renderNotes } from '../lib/releases/markdown.ts';
+import type { Release, RepoKey } from '../lib/releases/types.ts';
+import { links } from '../lib/site';
+
+// Rendered on demand from the release cache, so release notes appear without a deploy.
+export const prerender = false;
+
+const MAX_ENTRIES = 30;
+const products: Record<RepoKey, { name: string; param: string; releases: string }> = {
+  client: { name: 'Gotalk apps', param: 'apps', releases: links.clientReleases },
+  server: { name: 'Gotalk server', param: 'server', releases: links.serverReleases },
+};
+
+const store = releaseStore();
+const [client, server] = await Promise.all([store.get('client'), store.get('server')]);
+const param = Astro.url.searchParams.get('product');
+const only = (Object.keys(products) as RepoKey[]).find((k) => products[k].param === param);
+
+const entries: { repo: RepoKey; release: Release }[] = [
+  ...(only && only !== 'client'
+    ? []
+    : client.releases.map((release) => ({ repo: 'client' as const, release }))),
+  ...(only && only !== 'server'
+    ? []
+    : server.releases.map((release) => ({ repo: 'server' as const, release }))),
+]
+  .sort((a, b) => b.release.publishedAt.localeCompare(a.release.publishedAt))
+  .slice(0, MAX_ENTRIES);
+
+Astro.response.headers.set('Cache-Control', releaseCacheControl(entries.length > 0));
+const stale =
+  (!only || only === 'client') && client.stale
+    ? client
+    : (!only || only === 'server') && server.stale
+      ? server
+      : null;
+
+const tabs = [
+  { href: '/changelog', label: 'Everything', current: !only },
+  ...(Object.keys(products) as RepoKey[]).map((k) => ({
+    href: `/changelog?product=${products[k].param}`,
+    label: products[k].name,
+    current: only === k,
+  })),
+];
+const anchor = (repo: RepoKey, tag: string) =>
+  `${products[repo].param}-${tag.replace(/[^A-Za-z0-9._-]/g, '-')}`;
+const date = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' });
+---
+
+<BaseLayout
+  title="Gotalk changelog: release notes for the apps and server"
+  description="What changed in each release of the Gotalk desktop and web apps and the Gotalk server."
+>
+  <header class="page-header">
+    <div class="container head">
+      <h1 class="title">Changelog</h1>
+      <p class="lede">Release notes for the Gotalk apps and server, newest first.</p>
+      <nav aria-label="Filter releases">
+        <ul class="tabs" role="list">
+          {tabs.map((t) => (
+            <li>
+              <a href={t.href} aria-current={t.current ? 'page' : undefined}>
+                {t.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      {stale && (
+        <StaleNotice
+          fetchedAt={stale.fetchedAt}
+          releasesUrl={stale === client ? links.clientReleases : links.serverReleases}
+        />
+      )}
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container prose-column">
+      {entries.length === 0 ? (
+        <p>
+          Release notes are unavailable right now. They are on GitHub for the{' '}
+          <a href={links.clientReleases}>apps</a> and the <a href={links.serverReleases}>server</a>.
+        </p>
+      ) : (
+        <ol class="releases" role="list">
+          {entries.map(({ repo, release }) => (
+            <li class="release" id={anchor(repo, release.tag)}>
+              <h2 class="heading">
+                {products[repo].name} {release.version}
+              </h2>
+              <p class="small mute meta">
+                {release.prerelease && <span class="badge">Beta</span>}
+                <time datetime={release.publishedAt}>{date(release.publishedAt)}</time>
+                <span aria-hidden="true">·</span>
+                <a href={release.url}>On GitHub</a>
+                <span aria-hidden="true">·</span>
+                <a href={repo === 'client' ? links.downloads : links.selfHost}>
+                  {repo === 'client' ? 'Download' : 'Install'}
+                </a>
+              </p>
+              {release.notes.trim() ? (
+                <div class="notes" set:html={renderNotes(release.notes)} />
+              ) : (
+                <p class="mute">No notes for this release.</p>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      <p class="small mute more">
+        Older releases are on GitHub for the <a href={links.clientReleases}>apps</a> and the{' '}
+        <a href={links.serverReleases}>server</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding-block: 80px 48px;
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .head {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .tabs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gt-space-xs);
+  }
+
+  .tabs a {
+    display: inline-flex;
+    padding: 8px 12px;
+    border-radius: var(--gt-radius-sm);
+    color: var(--gt-color-mute);
+    font-size: var(--gt-type-body-sm-size);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .tabs a:hover,
+  .tabs a[aria-current='page'] {
+    color: var(--gt-color-ink);
+  }
+
+  .tabs a[aria-current='page'] {
+    background: var(--gt-color-surface-elevated);
+  }
+
+  .releases {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 48px;
+  }
+
+  .release {
+    display: grid;
+    gap: var(--gt-space-md);
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gt-space-sm);
+  }
+
+  .notes {
+    display: grid;
+    gap: var(--gt-space-md);
+    overflow-wrap: anywhere;
+  }
+
+  .notes :global(ul),
+  .notes :global(ol) {
+    padding-left: 1.2em;
+    display: grid;
+    gap: var(--gt-space-xs);
+  }
+
+  .notes :global(h3),
+  .notes :global(h4),
+  .notes :global(h5),
+  .notes :global(h6) {
+    color: var(--gt-color-ink);
+    font-size: var(--gt-type-body-md-size);
+    font-weight: 600;
+  }
+
+  .notes :global(pre) {
+    overflow-x: auto;
+  }
+
+  .more {
+    margin-top: 48px;
+  }
+</style>

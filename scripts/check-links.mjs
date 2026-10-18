@@ -1,12 +1,35 @@
-// Checks that every internal link and asset reference in the built site resolves to a file.
+// Checks that every internal link and asset reference in the built site resolves to a file, or to a route
+// rendered on demand (a page with `export const prerender = false`).
 //
-//   node scripts/check-links.mjs apps/web/dist/client
+//   node scripts/check-links.mjs apps/web/dist/client [apps/web/src/pages]
 //
-// External links are not fetched; CI should not fail because a third-party site is down.
+// External links are not fetched; CI should not fail because a third-party site is down. Pages rendered on
+// demand are checked by the site test, which runs the built server.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 const root = resolve(process.argv[2] ?? 'apps/web/dist/client');
+const pagesDir = resolve(process.argv[3] ?? 'apps/web/src/pages');
+
+/** Routes of pages that opt out of prerendering, such as /download. Dynamic segments are not supported. */
+const onDemand = new Set();
+(function walk(dir) {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) walk(path);
+    else if (
+      /\.(astro|ts|js)$/.test(name) &&
+      /export const prerender = false/.test(readFileSync(path, 'utf8'))
+    ) {
+      onDemand.add(
+        '/' +
+          relative(pagesDir, path)
+            .replace(/\.(astro|ts|js)$/, '')
+            .replace(/(^|\/)index$/, ''),
+      );
+    }
+  }
+})(pagesDir);
 if (!existsSync(root)) {
   console.error(`No build output at ${root}. Run the build first.`);
   process.exit(1);
@@ -49,6 +72,7 @@ for (const page of pages) {
       if (/^(https?:|mailto:|tel:|data:)/.test(ref) || ref.startsWith('//')) continue;
       checked++;
       const url = new URL(ref, `https://site.invalid${from}`);
+      if (onDemand.has(url.pathname.replace(/\/$/, '') || '/')) continue;
       const file = url.pathname === '/' ? join(root, 'index.html') : target(url.pathname);
       if (!file) {
         problems.push(`${relative(root, page)}: ${ref} (no such file)`);
@@ -66,4 +90,7 @@ if (problems.length) {
   console.error(`${problems.length} broken internal link(s):\n` + problems.map((p) => `  ${p}`).join('\n'));
   process.exit(1);
 }
-console.log(`check-links: ${checked} internal references across ${pages.length} pages resolve.`);
+console.log(
+  `check-links: ${checked} internal references across ${pages.length} pages resolve ` +
+    `(on-demand routes: ${[...onDemand].sort().join(', ')}).`,
+);

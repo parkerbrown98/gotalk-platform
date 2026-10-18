@@ -1,0 +1,259 @@
+---
+import FileList from '../components/FileList.astro';
+import Icon from '../components/Icon.astro';
+import StaleNotice from '../components/StaleNotice.astro';
+import quickstart from '../generated/server-quickstart.json';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { classifyServerAsset, downloadsByOs, osNames, selectRelease } from '../lib/releases/assets.ts';
+import { releaseCacheControl, releaseStore } from '../lib/releases/index.ts';
+import { links, repos, site } from '../lib/site';
+
+// Rendered on demand from the release cache, so a new server release shows up without a deploy. The
+// Compose commands come from the server's getting-started guide at build time (integrations/releases.mjs).
+export const prerender = false;
+
+const view = await releaseStore().get('server');
+const { release, channel } = selectRelease(view.releases, classifyServerAsset);
+const groups = release ? downloadsByOs(release, classifyServerAsset) : [];
+const checksums = release?.assets.find((a) => a.name === 'checksums.txt');
+Astro.response.headers.set('Cache-Control', releaseCacheControl(Boolean(release)));
+
+const released = release
+  ? new Date(release.publishedAt).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })
+  : undefined;
+const clone = `git clone --depth 1${release ? ` --branch ${release.tag}` : ''} ${repos.server}.git
+cd gotalk-server`;
+const image = `${links.serverImage}:${release?.version ?? 'edge'}`;
+---
+
+<BaseLayout
+  title="Host your own Gotalk server"
+  description="Run Gotalk with Docker Compose, a single binary or Kubernetes. Open source, PostgreSQL, optional Redis and LiveKit."
+>
+  <header class="page-header">
+    <div class="container head">
+      <h1 class="title">Host your own server</h1>
+      <p class="lede">One binary or one Compose file. You need PostgreSQL. Redis and LiveKit are optional.</p>
+      <div class="actions">
+        <a class="button button-primary" href="#compose">
+          Quick start
+        </a>
+        <a class="button button-secondary" href={links.serverGettingStarted}>
+          Getting started guide
+          <Icon name="external" size={14} />
+        </a>
+      </div>
+      {release && (
+        <p class="version small mute">
+          {channel === 'beta' && <span class="badge">Beta</span>} Server version {release.version}, released{' '}
+          {released}. <a href={release.url}>Release notes</a> · <a href={links.changelog}>Changelog</a> ·{' '}
+          <a href={links.serverReleases}>All releases</a>
+        </p>
+      )}
+      {view.stale && <StaleNotice fetchedAt={view.fetchedAt} releasesUrl={links.serverReleases} />}
+    </div>
+  </header>
+
+  <section class="section" id="compose" aria-labelledby="compose-title">
+    <div class="container prose-column steps">
+      <h2 id="compose-title" class="heading">
+        Quick start with Docker Compose
+      </h2>
+      <p class="mute">
+        Get the server{release ? ` at ${release.tag}` : ''}, which includes the Compose file:
+      </p>
+      <pre class="code"><code>{clone}</code></pre>
+      <p class="mute">Then start it:</p>
+      <pre class="code"><code>{quickstart.code}</code></pre>
+      <p>
+        Open the link and the setup wizard checks your environment, names your instance, creates your
+        administrator account and configures storage, email and voice.
+      </p>
+      <p class="mute">
+        For anything beyond trying it on your own machine, copy <code>.env.example</code> to <code>.env</code>{' '}
+        and set at least <code>POSTGRES_PASSWORD</code> and <code>GOTALK_SERVER_PUBLIC_URL</code>.
+      </p>
+      <p class="small mute">
+        These commands come from the server's <a href={quickstart.source}>getting-started guide</a> (
+        {quickstart.ref}).
+      </p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="needs-title">
+    <div class="container">
+      <h2 id="needs-title" class="heading">
+        What it needs
+      </h2>
+      <ul class="grid-3 needs" role="list">
+        <li class="card">
+          <h3 class="heading-sm">PostgreSQL</h3>
+          <p class="mute">Required. Migrations run automatically when the server starts.</p>
+        </li>
+        <li class="card">
+          <h3 class="heading-sm">Redis</h3>
+          <p class="mute">Optional for one server. Required to run more than one replica.</p>
+        </li>
+        <li class="card">
+          <h3 class="heading-sm">LiveKit</h3>
+          <p class="mute">Optional. Needed only for voice and video channels.</p>
+        </li>
+      </ul>
+      <p class="mute after">
+        Files go to local disk or any S3-compatible bucket, and email to SMTP or a provider, or you can skip
+        email for now. See <a href={links.storageAndEmail}>storage and email</a> and{' '}
+        <a href={links.configuration}>configuration</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="binaries" aria-labelledby="binaries-title">
+    <div class="container">
+      <h2 id="binaries-title" class="heading">
+        Single binary
+      </h2>
+      {release ? (
+        <>
+          <p class="mute intro">
+            Each archive holds the <code>gotalk</code> binary, the README and an example config. Start it with{' '}
+            <code>gotalk serve</code>; see <a href={links.cli}>commands and running the binary</a>.
+          </p>
+          <ul class="grid-3 platforms" role="list">
+            {groups.map((g) => (
+              <li class="card platform">
+                <h3 class="heading-sm">{osNames[g.os]}</h3>
+                <FileList downloads={g.downloads} />
+              </li>
+            ))}
+          </ul>
+          {checksums && (
+            <p class="mute after">
+              Verify with <a href={checksums.url}>checksums.txt</a> from the same release:{' '}
+              <code>sha256sum --check --ignore-missing checksums.txt</code>
+            </p>
+          )}
+        </>
+      ) : (
+        <div class="card unavailable">
+          <p>
+            The download list is unavailable right now. Every binary is on the{' '}
+            <a href={links.serverReleases}>GitHub releases page</a>.
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section" id="container" aria-labelledby="container-title">
+    <div class="container prose-column steps">
+      <h2 id="container-title" class="heading">
+        Container image
+      </h2>
+      <p class="mute">
+        Multi-architecture images (amd64 and arm64) are published for every release. The <code>edge</code> tag
+        follows the main branch.
+      </p>
+      <pre class="code"><code>docker pull {image}</code></pre>
+    </div>
+  </section>
+
+  <section class="section" id="kubernetes" aria-labelledby="kubernetes-title">
+    <div class="container prose-column steps">
+      <h2 id="kubernetes-title" class="heading">
+        Kubernetes
+      </h2>
+      <p class="mute">
+        A Helm chart and plain Kustomize manifests run several replicas behind an ingress, with managed
+        PostgreSQL, Redis and S3-compatible storage.
+      </p>
+      <div class="actions">
+        <a class="button button-secondary" href={links.helmChart}>
+          Helm chart
+          <Icon name="external" size={14} />
+        </a>
+        <a class="button button-secondary" href={links.kustomize}>
+          Kustomize manifests
+          <Icon name="external" size={14} />
+        </a>
+        <a class="button button-secondary" href={links.deployment}>
+          Deployment guide
+          <Icon name="external" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="next-title">
+    <div class="container prose-column steps">
+      <h2 id="next-title" class="heading">
+        Before you open it up
+      </h2>
+      <ul class="next">
+        <li>
+          <a href={links.configuration}>Configuration</a>: every setting, from the file, environment or the
+          setup page.
+        </li>
+        <li>
+          <a href={links.storageAndEmail}>Storage and email</a>: S3-compatible buckets and mail providers.
+        </li>
+        <li>
+          <a href={links.backup}>Backup and restore</a>: what to back up and how to restore it.
+        </li>
+      </ul>
+      <p class="mute">
+        Not ready to host? Try Gotalk Official at <code>{site.officialInstance}</code> from the{' '}
+        <a href={links.downloads}>apps</a> or the <a href={site.appUrl}>web app</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding-block: 80px 48px;
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .head {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .version .badge {
+    margin-right: 4px;
+  }
+
+  .steps {
+    display: grid;
+    gap: var(--gt-space-md);
+  }
+
+  .needs,
+  .platforms {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--gt-space-xl);
+  }
+
+  .needs .card,
+  .platform {
+    display: grid;
+    gap: var(--gt-space-sm);
+    align-content: start;
+  }
+
+  .intro {
+    margin-top: var(--gt-space-md);
+  }
+
+  .after,
+  .unavailable {
+    margin-top: var(--gt-space-xl);
+  }
+
+  .next {
+    display: grid;
+    gap: var(--gt-space-sm);
+    padding-left: 1.2em;
+  }
+</style>
