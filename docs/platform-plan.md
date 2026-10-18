@@ -51,9 +51,9 @@ Gotalk forum. This site fills that gap.
 
 Consequences:
 
-- `app.gotalk.sh` is an application shell. It should be `noindex` (robots header and `robots.txt`) so it never
-  competes with the index pages for the same content. Fixing that is a one-line client change tracked under
-  [cross-repo dependencies](#cross-repo-dependencies).
+- `app.gotalk.sh` is an application shell. It is `noindex` (meta tag and `X-Robots-Tag` header, with crawling
+  left allowed so the instruction is seen) so it never competes with the index pages for the same content. The
+  client change is made, see [cross-repo dependencies](#cross-repo-dependencies).
 - Every index page links into the app with a "Open in Gotalk" action. The two sites need a shared link format, so
   the platform builds on the client's existing invite-link shape (`https://<web client>/…?instance=<origin>` and
   `gotalk://…?instance=<origin>`). Topic deep links are a client dependency.

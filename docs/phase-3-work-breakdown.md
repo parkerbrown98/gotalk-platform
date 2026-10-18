@@ -117,11 +117,18 @@ transaction, in batches if there are many.
 
 ## gotalk-client
 
-### C1. `app.gotalk.sh` is not indexed
+### C1. `app.gotalk.sh` is not indexed ✅
 
-- Serve `X-Robots-Tag: noindex` for the web export and add a `robots.txt` that disallows everything.
-  Social preview tags can stay so shared links still unfurl. This avoids duplicate content against the index
+- Done. The web export carries `<meta name="robots" content="noindex">`
+  ([index.html](https://github.com/parkerbrown98/gotalk-client/blob/main/apps/app/public/index.html)), and
+  `public/_headers` sets `X-Robots-Tag: noindex` on hosts that read it (Cloudflare Pages, Netlify). On other
+  hosts the header must be set in the host's configuration. Documented in the client's
+  [releases doc](https://github.com/parkerbrown98/gotalk-client/blob/main/docs/releases.md#hosting-the-web-export).
+- **No `robots.txt` that disallows crawling.** A crawler that cannot fetch a page never sees its `noindex`, and
+  the URL can still be listed from links. `noindex` works only while crawling is allowed.
+- Social preview tags can stay so shared links still unfurl. This avoids duplicate content against the index
   pages.
+- Remaining at deploy time: confirm the header is actually served by the `app.gotalk.sh` host.
 
 ### C2. Deep links for index pages
 
@@ -186,7 +193,7 @@ whenever the index launches.
 - [ ] A listed instance's well-known document advertises the `directory` block and nothing else changes for
   instances that do not list.
 - [ ] A signed ping is accepted by the fake platform and is debounced.
-- [ ] `app.gotalk.sh` serves `noindex`.
+- [x] `app.gotalk.sh` serves `noindex` (in the client repo; verify the header on the live host).
 - [ ] Deep links for places and topics open the right screen, including for an unsaved instance.
 - [ ] Settings for the instance, place, board and account exist, with notices.
 - [ ] The legal clause is in place before listing can be enabled outside development (pending legal input).
