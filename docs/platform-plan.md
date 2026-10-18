@@ -182,9 +182,10 @@ The download page must never go stale and must never require a platform-site dep
 - **Source of truth:** the GitHub Releases of `gotalk-client` (desktop installers for macOS arm64 and x64, Linux
   and Windows) and `gotalk-server` (binaries for Linux, macOS and Windows, plus the container image).
 - **Fetching:** the web app reads the latest non-prerelease release through the GitHub Releases API on the
-  server, caches it in memory and in Postgres, and refreshes on a timer and on a release webhook. If GitHub is
-  down, the last cached release is served. A `beta` channel toggle shows pre-releases (tags with a suffix, such
-  as `v0.1.0-beta.1`).
+  server, caches it in memory and in a JSON snapshot on disk (plus one baked into the build), and refreshes on a
+  timer and on a release webhook. If GitHub is down, the last cached release is served. The snapshot can move to
+  Postgres once the index database exists (Phase 4); a database only for this was not worth it in Phase 2. A
+  `beta` channel toggle shows pre-releases (tags with a suffix, such as `v0.1.0-beta.1`).
 - **OS detection:** the primary button picks the right installer from the user agent. A small islands script
   does this, and the page still lists every asset without JavaScript.
 - **Integrity:** link to the release page and show checksums where release workflows publish them.
@@ -474,7 +475,7 @@ scores (performance, accessibility, best practices, SEO at 95 or above). Lightho
 build scores 99 to 100 in all four categories on every page, mobile and desktop, with mobile LCP under 2 s and
 no layout shift.
 
-### Phase 2 — Downloads and self-host ⬜
+### Phase 2 — Downloads and self-host ✅
 
 - Release fetcher with cache, refresh and a release webhook, for `gotalk-client` and `gotalk-server`.
 - `/download` with OS detection, all assets listed without JavaScript, checksums, beta channel toggle, notes
@@ -486,6 +487,40 @@ no layout shift.
 
 Done when publishing a release in either repo updates the site within minutes with no site deploy, and the
 page degrades cleanly when GitHub is unreachable.
+
+Deliverables (see [Deployment](deployment.md#release-data) and [Development](development.md#release-pages)):
+
+- ✅ Release fetcher in [lib/releases](../apps/web/src/lib/releases): conditional GitHub API reads (ETags, so an
+  unchanged list costs no rate limit), an optional token, a 5 second timeout, refresh every 5 minutes
+  (configurable) and on the [release webhook](deployment.md#release-webhook), single-flight requests, and backoff
+  that honors GitHub's rate-limit reset. Decided with the owner: no Postgres yet. The cache is memory plus
+  `DATA_DIR/releases.json`, plus a snapshot baked in at build time, so a restart during an outage still has data.
+- ✅ Webhook at `POST /api/webhooks/github`: `X-Hub-Signature-256` HMAC check, `ping`, release actions only for the
+  two tracked repositories, a follow-up refresh 30 seconds later. Disabled (`404`) without a secret.
+- ✅ `/download`: the newest release's installers grouped by OS, with sizes and the SHA-256 digest GitHub computes
+  for each asset, and verification commands. The primary button picks the installer for the visitor's OS (and,
+  in Chromium, the Mac's architecture) in a small script; without JavaScript it jumps to the full list. Without a
+  stable release the newest pre-release is shown and labeled; when a pre-release is newer than the stable one,
+  `?channel=beta` offers it. Signing notes: macOS signed and notarized, Windows unsigned with the SmartScreen
+  step. Web app, mobile "on the way" (no store links), Gotalk Official and `SoftwareApplication` structured data.
+- ✅ `/self-host`: the Compose quick start pulled at build time from the server's getting-started guide at its
+  latest release tag (the build fails if the section moves), a `git clone` of that tag, requirements, the binary
+  archives with digests and `checksums.txt`, the versioned GHCR image, Helm and Kustomize links, next steps.
+- ✅ `/changelog`: client and server release notes, newest first, filterable by product, rendered with
+  `markdown-it` as user content (HTML escaped, `ugc nofollow` links, images as links, headings demoted).
+- ✅ The three pages render on demand with `Cache-Control: s-maxage=120, stale-while-revalidate, stale-if-error`,
+  show a notice with the data's age when GitHub is unreachable, and link to GitHub's release pages when there is
+  no data at all. Header, footer, home page, `llms.txt` and the sitemap point at them; the link checker knows
+  on-demand routes.
+- ✅ Tests: 60 unit tests (fetcher against a fake GitHub API with outages, rate limits, timeouts and malformed
+  answers; cache backoff, fallback, snapshots and restarts; classifier for the real asset names; channels;
+  sanitizing; signatures) and a site test that runs the built server against the fake API: a webhook brings in a
+  new release without a deploy, an outage and a restart during it keep the last list, and every internal link on
+  the pages resolves. CI runs both.
+- ⬜ Platform logos on the download cards ([brand and copy](brand-and-copy.md#brand-assets) asks for a
+  permissively licensed set). The cards use text headings until one is chosen.
+- Note for the client repo: its release body ("See the assets below…") reads oddly on `/changelog`. Generated
+  notes, as the server uses, would fit better.
 
 ### Phase 3 — Opt-in support in server and client ⬜
 

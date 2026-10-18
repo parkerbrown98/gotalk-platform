@@ -16,8 +16,8 @@ Documentation for `gotalk-platform`, the marketing and public-index website serv
 
 | Page | What's in it |
 |---|---|
-| [Development](development.md) | Layout, design tokens, screenshots and brand assets, SEO and crawlers, checks |
-| [Deployment](deployment.md) | Container image, configuration, Cloudflare settings, staging |
+| [Development](development.md) | Layout, design tokens, screenshots and brand assets, release pages, SEO and crawlers, checks |
+| [Deployment](deployment.md) | Container image, configuration, release data and the release webhook, Cloudflare settings, staging |
 
 ## Project planning
 

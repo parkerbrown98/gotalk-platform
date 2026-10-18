@@ -9,6 +9,7 @@
 - [Product screenshots](#product-screenshots)
 - [Brand assets](#brand-assets)
 - [Pages and copy](#pages-and-copy)
+- [Release pages](#release-pages)
 - [SEO and crawlers](#seo-and-crawlers)
 - [Checks](#checks)
 
@@ -16,23 +17,28 @@
 
 ```
 apps/web/                 Astro site (the only app until the indexer arrives in Phase 4)
-  astro.config.mjs        Node adapter, fonts, CSP, sitemap, tokens integration
+  astro.config.mjs        Node adapter, fonts, CSP, sitemap, tokens and releases integrations
   integrations/tokens.mjs Generates the --gt-* stylesheet from @gotalk/tokens
+  integrations/releases.mjs  Bakes a release snapshot and pulls the server's Compose quick start at build time
   public/                 Favicons, manifest, social image, brand SVGs (generated, committed)
   scripts/                Maintainer scripts: capture-screens.mjs, build-brand.mjs
   src/
     assets/screens/       Product screenshots captured from the client mockups (committed)
-    components/           Header, Footer, Seo, Screenshot, Icon
+    components/           Header, Footer, Seo, Screenshot, Icon, FileList, StaleNotice
+    generated/            Release snapshot and server quick start (written by the build, ignored by git)
     layouts/              BaseLayout
     lib/                  site.ts (names and links), seo.ts, crawlers.ts (robots policy)
-    pages/                Routes, plus robots.txt, llms.txt and healthz endpoints
+    lib/releases/         GitHub release fetcher, cache, asset classification, release-notes Markdown
+    pages/                Routes, plus robots.txt, llms.txt, healthz and the release webhook (api/webhooks)
     styles/global.css     Base styles; imports the generated tokens
+  test/                   Site test against the built server, and a fake GitHub API
+  vitest.config.ts        Test projects: unit (src/**/*.test.ts) and site (test/)
 scripts/check-links.mjs   Internal link checker for the build output
 ```
 
-Pages are prerendered by default. A route that needs a live server (the public index, later phases) opts out
-with `export const prerender = false`, as [healthz.ts](../apps/web/src/pages/healthz.ts) does, and is rendered
-by the Node adapter.
+Pages are prerendered by default. A route that needs a live server opts out with `export const prerender = false`,
+as the release pages and [healthz.ts](../apps/web/src/pages/healthz.ts) do, and is rendered by the Node adapter.
+The link checker finds these routes in `src/pages` by that line.
 
 ## Design tokens
 
@@ -89,8 +95,26 @@ files in the client repo first, then re-run the script and commit the outputs.
 
 Copy follows [brand and copy](brand-and-copy.md). Before adding a claim, check its
 [claims table](brand-and-copy.md#claims-we-can-and-cannot-make-yet). External destinations live in
-[site.ts](../apps/web/src/lib/site.ts) so they change in one place; the download links point at GitHub releases
-until `/download` exists (Phase 2).
+[site.ts](../apps/web/src/lib/site.ts) so they change in one place.
+
+## Release pages
+
+`/download`, `/self-host` and `/changelog` render the latest `gotalk-client` and `gotalk-server` releases on demand
+(see [Deployment](deployment.md#release-data) for caching, fallbacks and the webhook).
+
+- [lib/releases](../apps/web/src/lib/releases) has the GitHub client (`github.ts`), the cache (`store.ts`), the
+  asset classifier and channel selection (`assets.ts`), the release-notes renderer (`markdown.ts`) and the webhook
+  signature check (`webhook.ts`). `index.ts` wires them to the environment. The modules other than `index.ts`
+  use only Node APIs and erasable TypeScript (`erasableSyntaxOnly`), because the build integration imports them
+  with plain Node.
+- Installer names are matched in `classifyClientAsset` and `classifyServerAsset`. If a release workflow changes
+  its file names, update the patterns and the tests next to them; an unrecognized file is not listed.
+- Release notes are user content (GitHub's generated notes quote pull request titles): raw HTML is escaped,
+  links get `rel="ugc nofollow noopener"` and images become links.
+- `pnpm dev` and `pnpm build` read real releases from GitHub. Set `GITHUB_TOKEN` if you hit the rate limit, or
+  `GITHUB_API_URL` to point at a fake. The [/self-host](../apps/web/src/pages/self-host.astro) Compose commands
+  come from the server's `docs/getting-started.md` at its latest release tag; the build fails if that section
+  moves, rather than ship a copy that drifts.
 
 ## SEO and crawlers
 
@@ -104,9 +128,16 @@ until `/download` exists (Phase 2).
 
 ## Checks
 
-`pnpm verify` runs what CI runs: Prettier, ESLint (with `jsx-a11y` rules), `astro check`, the build and the link
-check. The link check fails on missing files and on `#anchors` that do not exist on the target page. External
-links are not fetched.
+`pnpm verify` runs what CI runs: Prettier, ESLint (with `jsx-a11y` rules), `astro check`, the unit tests, the
+build, the link check and the site test. The link check fails on missing files and on `#anchors` that do not
+exist on the target page. External links are not fetched.
+
+- `pnpm test` runs the unit tests (Vitest): the GitHub client against a fake API (ETags, outages, rate limits,
+  timeouts, malformed answers), the cache (backoff, outage fallback, snapshots, restarts), the asset classifier
+  and channels, release-notes sanitizing and webhook signatures.
+- `pnpm test:site` runs the built server (`pnpm build` first) against the fake GitHub API: the three release pages,
+  a signed webhook that brings in a new release without a deploy, an outage, a restart during the outage, and
+  every internal link on those pages.
 
 Phase 1 was verified with Lighthouse 13 (mobile and desktop presets) against the production server, all pages
 scoring 99 or 100 in performance, accessibility, best practices and SEO. To re-run:
