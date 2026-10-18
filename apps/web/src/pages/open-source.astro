@@ -1,0 +1,218 @@
+---
+import Icon from '../components/Icon.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links, repos } from '../lib/site';
+
+const projects = [
+  {
+    name: 'gotalk-server',
+    href: repos.server,
+    license: 'GNU AGPL-3.0',
+    body: 'The server every community runs: accounts, places, forums, chat, voice signalling, moderation and the API. Written in Go.',
+    contribute: { href: links.serverDevelopment, label: 'Development guide' },
+    releases: links.serverReleases,
+  },
+  {
+    name: 'gotalk-client',
+    href: repos.client,
+    license: 'MIT',
+    body: 'The official apps for Windows, macOS, Linux and the web, from one Expo and Tauri codebase. Mobile builds come from the same code.',
+    contribute: { href: links.clientDevelopment, label: 'Development guide' },
+    releases: links.downloads,
+  },
+  {
+    name: 'gotalk-gateway',
+    href: repos.gateway,
+    license: 'GNU AGPL-3.0',
+    body: 'The push notification gateway, in development, that will let any server reach the official mobile apps without seeing message content.',
+    contribute: { href: links.gatewayContributing, label: 'Contributing (DCO)' },
+  },
+];
+---
+
+<BaseLayout
+  title="Gotalk is open source"
+  description="The Gotalk server and push gateway are AGPL-3.0 and the client is MIT. See the repositories, licenses and how to contribute."
+>
+  <header class="page-header">
+    <div class="container">
+      <h1 class="title">Built in the open</h1>
+      <p class="lede">
+        Every part of Gotalk is open source. Run it, read it, change it, and send your changes back if you
+        like.
+      </p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="repos-title">
+    <div class="container">
+      <h2 id="repos-title" class="heading">
+        Repositories
+      </h2>
+      <ul class="grid-3 projects" role="list">
+        {projects.map((p) => (
+          <li class="card project">
+            <div class="project-head">
+              <h3 class="heading-sm">
+                <a href={p.href}>{p.name}</a>
+              </h3>
+              <span class="badge">{p.license}</span>
+            </div>
+            <p class="mute">{p.body}</p>
+            <ul class="project-links">
+              <li>
+                <a href={p.href}>
+                  <Icon name="github" size={14} /> Source
+                </a>
+              </li>
+              <li>
+                <a href={p.contribute.href}>{p.contribute.label}</a>
+              </li>
+              {p.releases && (
+                <li>
+                  <a href={p.releases}>Releases</a>
+                </li>
+              )}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="licenses-title">
+    <div class="container prose-column">
+      <h2 id="licenses-title" class="heading">
+        What the licenses mean
+      </h2>
+      <div class="prose">
+        <p>
+          <strong>Server and gateway: GNU AGPL-3.0.</strong> You can run, study, change and share them. If you
+          run a modified version as a network service, you must offer its source to the users of that service.
+          Running an unmodified release for your community asks nothing of you.
+        </p>
+        <p>
+          <strong>Client: MIT.</strong> Use, change and redistribute the apps with very few conditions: keep
+          the copyright and license notice.
+        </p>
+        <p class="small mute">
+          This is a summary, not legal advice. The license file in each repository is what applies.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="open-protocol-title">
+    <div class="container prose-column">
+      <h2 id="open-protocol-title" class="heading">
+        Any client, any server
+      </h2>
+      <div class="prose">
+        <p>
+          There is no privileged server. Given only a domain, any app finds a server through
+          <code>/.well-known/gotalk-instance</code>, and the whole API is described in OpenAPI 3.1 and served
+          by every server at <code>/api/v1/docs</code>. Third-party apps, bots and tools work against your
+          server the same way the official apps do.
+        </p>
+        <p>
+          <a class="more" href={links.apiOverview}>
+            API overview
+            <Icon name="external" size={14} />
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="contribute-title">
+    <div class="container prose-column">
+      <h2 id="contribute-title" class="heading">
+        Contribute
+      </h2>
+      <div class="prose">
+        <p>
+          Bug reports, fixes and documentation improvements are welcome in each repository. Start with the
+          development guide for the project you want to work on; it covers setup, tests and how the code is
+          laid out. Contributions to the gateway are accepted under the Developer Certificate of Origin.
+        </p>
+        <p>
+          Gotalk is in beta. Releases are tagged as pre-releases while the API and apps settle, and the
+          changelog lives with each release on GitHub.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding-block: 80px 48px;
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .page-header .container {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .projects {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--gt-space-xl);
+  }
+
+  .project {
+    display: grid;
+    gap: var(--gt-space-md);
+    align-content: start;
+  }
+
+  .project-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gt-space-sm);
+    flex-wrap: wrap;
+  }
+
+  .project-head a {
+    text-decoration: none;
+  }
+
+  .project-head a:hover {
+    text-decoration: underline;
+  }
+
+  .project-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gt-space-xs) var(--gt-space-lg);
+    font-size: var(--gt-type-body-sm-size);
+  }
+
+  .project-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-block: 6px;
+  }
+
+  .prose {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .prose strong {
+    color: var(--gt-color-ink);
+    font-weight: 500;
+  }
+
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+</style>

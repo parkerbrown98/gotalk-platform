@@ -1,0 +1,320 @@
+---
+import type { ImageMetadata } from 'astro';
+
+import chat from '../assets/screens/chat.png';
+import compose from '../assets/screens/compose.png';
+import developer from '../assets/screens/developer.png';
+import feed from '../assets/screens/feed.png';
+import forumBoard from '../assets/screens/forum-board.png';
+import moderation from '../assets/screens/moderation.png';
+import roles from '../assets/screens/roles.png';
+import serverSettings from '../assets/screens/server-settings.png';
+import voice from '../assets/screens/voice.png';
+import Icon from '../components/Icon.astro';
+import Screenshot from '../components/Screenshot.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { links } from '../lib/site';
+
+interface Feature {
+  id: string;
+  title: string;
+  lede: string;
+  points: string[];
+  shots: { src: ImageMetadata; alt: string }[];
+  more?: { href: string; label: string };
+}
+
+const features: Feature[] = [
+  {
+    id: 'forums',
+    title: 'Forums',
+    lede: 'A place’s forum is a tree of boards. Topics hold a conversation that can end in an accepted answer, and stay easy to find long after.',
+    points: [
+      'Categories and boards, flat or threaded, with optional Q&A solutions',
+      'Markdown posts with edit history, reactions, tags and @mentions',
+      'Drafts saved to the server, so a half-written reply follows you between devices',
+      'Unread tracking, and watch, normal or mute at the place, board and topic level',
+      'Pin, lock, archive and move topics; deleted replies keep the thread readable',
+    ],
+    shots: [
+      {
+        src: forumBoard,
+        alt: 'A Gotalk board listing topics, with pinned topics first and unread topics marked.',
+      },
+      {
+        src: compose,
+        alt: 'Writing a new Gotalk topic, with tag suggestions and an @mention autocomplete.',
+      },
+    ],
+    more: { href: links.apiForum, label: 'Forum documentation' },
+  },
+  {
+    id: 'feeds-and-search',
+    title: 'Feeds and search',
+    lede: 'See what’s happening across every place you joined, or search everything you can read.',
+    points: [
+      'Home and per-place feeds sorted by hot, new, active, top, rising or controversial',
+      'Topic voting, with reactions as the signal where a place turns voting off',
+      'Full-text search with author, tag, board, solved and date filters',
+      'Signed-out visitors can read public places, so good answers can be shared',
+    ],
+    shots: [
+      {
+        src: feed,
+        alt: 'The Gotalk home feed with topics from several places, vote counts, reply counts and a solved tag.',
+      },
+    ],
+    more: { href: links.apiForum, label: 'Feeds and search documentation' },
+  },
+  {
+    id: 'chat',
+    title: 'Chat and direct messages',
+    lede: 'Real-time channels next to the forums, for the conversations that don’t need to last.',
+    points: [
+      'Channels in categories, with threads, pins, reactions and replies',
+      'Direct and group messages',
+      'Presence and typing indicators',
+    ],
+    shots: [
+      {
+        src: chat,
+        alt: 'A Gotalk chat channel with messages, a thread and the online member list.',
+      },
+    ],
+    more: { href: links.apiChat, label: 'Chat documentation' },
+  },
+  {
+    id: 'voice',
+    title: 'Voice and video',
+    lede: 'Voice channels with cameras and screen sharing, routed through a LiveKit server you run alongside Gotalk.',
+    points: [
+      'Voice channels with optional user limits',
+      'Screen sharing and cameras',
+      'Moderators can mute, deafen, move and disconnect',
+      'Optional: Gotalk runs fine without voice until you add LiveKit',
+    ],
+    shots: [{ src: voice, alt: 'A Gotalk voice call with a shared screen and four participant tiles.' }],
+    more: { href: links.apiVoice, label: 'Voice documentation' },
+  },
+  {
+    id: 'moderation',
+    title: 'Moderation and roles',
+    lede: 'Tools for the people who keep a community healthy, with permissions as fine-grained as you need.',
+    points: [
+      'Reports queue with content snapshots, resolved or dismissed with a reason',
+      'Warnings, timeouts of up to 28 days, and temporary or permanent bans',
+      'An audit log of every moderation and administrative action',
+      'Roles with a permission set, plus per-board overwrites for staff-only and announcement boards',
+      'Versioned terms, privacy policy and guidelines, with consent tracking',
+    ],
+    shots: [
+      { src: moderation, alt: 'The Gotalk reports queue for moderators.' },
+      { src: roles, alt: 'The Gotalk role editor with permission toggles.' },
+    ],
+    more: { href: links.apiModeration, label: 'Moderation documentation' },
+  },
+  {
+    id: 'developers',
+    title: 'For developers',
+    lede: 'Everything the apps do goes through a documented, versioned API.',
+    points: [
+      'OpenAPI 3.1, with interactive docs served by every server at /api/v1/docs',
+      'Personal access tokens with read, write, gateway and admin scopes',
+      'Bots and slash commands, and outgoing webhooks',
+      'A WebSocket gateway for real-time events',
+    ],
+    shots: [{ src: developer, alt: 'Gotalk account settings listing personal access tokens.' }],
+    more: { href: links.apiDevelopers, label: 'Developer documentation' },
+  },
+  {
+    id: 'self-hosting',
+    title: 'Self-hosting',
+    lede: 'Built to be run by communities, not just by us. Small to start, and ready to grow.',
+    points: [
+      'A single static Go binary, or a ~20 MB distroless container image',
+      'PostgreSQL required; Redis and LiveKit optional',
+      'A browser setup wizard, or fully headless setup from environment variables',
+      'Docker Compose, a Helm chart and Kustomize manifests',
+      'Local or any S3-compatible storage; SMTP, SendGrid, Mailgun, Postmark, Resend or Amazon SES for email',
+      'Consistent backup and restore, including moving between storage backends',
+    ],
+    shots: [
+      {
+        src: serverSettings,
+        alt: 'Gotalk server settings showing health checks for database, Redis, storage and email.',
+      },
+    ],
+    more: { href: links.serverDocs, label: 'Server documentation' },
+  },
+];
+---
+
+<BaseLayout
+  title="Gotalk features: forums, chat, voice and moderation"
+  description="Searchable forums, real-time chat, voice rooms, roles and moderation, and an OpenAPI API. Open source and self-hostable."
+>
+  <header class="page-header">
+    <div class="container">
+      <h1 class="title">Everything a community needs, starting with forums</h1>
+      <p class="lede">
+        Gotalk puts lasting, searchable discussion first, with chat and voice beside it. Everything below
+        ships in the open-source server and the apps for Windows, macOS, Linux and the web.
+      </p>
+      <nav aria-label="On this page" class="toc">
+        <ul>
+          {features.map((f) => (
+            <li>
+              <a href={`#${f.id}`}>{f.title}</a>
+            </li>
+          ))}
+          <li>
+            <a href="#ownership">Privacy and ownership</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  {features.map((f) => (
+    <section class="section feature" id={f.id} aria-labelledby={`${f.id}-title`}>
+      <div class="container feature-grid">
+        <div class="feature-copy">
+          <h2 id={`${f.id}-title`} class="heading">
+            {f.title}
+          </h2>
+          <p class="mute">{f.lede}</p>
+          <ul class="points">
+            {f.points.map((p) => (
+              <li>{p}</li>
+            ))}
+          </ul>
+          {f.more && (
+            <a class="more" href={f.more.href}>
+              {f.more.label}
+              <Icon name="external" size={14} />
+            </a>
+          )}
+        </div>
+        <div class="shots">
+          {f.shots.map((s) => (
+            <Screenshot
+              src={s.src}
+              alt={s.alt}
+              sizes="(min-width: 1240px) 740px, (min-width: 900px) 60vw, calc(100vw - 32px)"
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="section feature" id="ownership" aria-labelledby="ownership-title">
+    <div class="container prose-column">
+      <h2 id="ownership-title" class="heading">
+        Privacy and ownership
+      </h2>
+      <p class="mute">
+        Every Gotalk server is self-sufficient. Accounts, places and content live on the server that hosts
+        them, and nothing requires a connection to us or to other servers.
+      </p>
+      <ul class="points">
+        <li>Any Gotalk app can connect to any Gotalk server; the apps keep a separate session for each</li>
+        <li>No federation to opt out of, and no shared identity between servers</li>
+        <li>Uploaded images have location and other metadata stripped</li>
+        <li>Open source from top to bottom, so you can check all of this yourself</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding-block: 80px 48px;
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .page-header .container {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  .page-header .title {
+    max-width: 22ch;
+  }
+
+  .toc ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gt-space-sm);
+    margin-top: var(--gt-space-sm);
+  }
+
+  .toc a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 var(--gt-space-md);
+    border-radius: var(--gt-radius-full);
+    border: 1px solid var(--gt-color-hairline);
+    background: var(--gt-color-surface);
+    color: var(--gt-color-body);
+    font-size: var(--gt-type-body-sm-size);
+    text-decoration: none;
+  }
+
+  .toc a:hover {
+    border-color: var(--gt-color-hairline-strong);
+    color: var(--gt-color-ink);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 56px;
+    align-items: start;
+  }
+
+  .feature-copy {
+    display: grid;
+    gap: var(--gt-space-lg);
+    position: sticky;
+    top: calc(var(--gt-size-nav-height) + 32px);
+  }
+
+  .shots {
+    display: grid;
+    gap: var(--gt-space-xl);
+  }
+
+  @media (max-width: 900px) {
+    .feature-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 32px;
+    }
+
+    .feature-copy {
+      position: static;
+    }
+  }
+
+  .points {
+    display: grid;
+    gap: var(--gt-space-sm);
+    padding-left: 1.2em;
+    color: var(--gt-color-body);
+  }
+
+  .points li::marker {
+    color: var(--gt-color-ash);
+  }
+
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    width: fit-content;
+  }
+</style>

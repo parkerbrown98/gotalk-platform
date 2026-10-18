@@ -1,0 +1,340 @@
+---
+import chat from '../assets/screens/chat.png';
+import forumTopic from '../assets/screens/forum-topic.png';
+import serverSettings from '../assets/screens/server-settings.png';
+import voice from '../assets/screens/voice.png';
+import welcome from '../assets/screens/welcome.png';
+import Icon from '../components/Icon.astro';
+import Screenshot from '../components/Screenshot.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { organizationJsonLd, websiteJsonLd } from '../lib/seo';
+import { links, repos, site } from '../lib/site';
+
+const pillars = [
+  {
+    title: 'Forums that last',
+    body: 'Boards, topics and replies with accepted answers, tags and full-text search. What your community works out doesn’t scroll away.',
+  },
+  {
+    title: 'Chat and voice, next door',
+    body: 'Real-time channels, direct messages and voice rooms sit beside the forums. Use whichever fits the moment.',
+  },
+  {
+    title: 'Yours to host',
+    body: 'Run Gotalk on a Raspberry Pi or a Kubernetes cluster. One server, your data, no lock-in.',
+  },
+];
+---
+
+<BaseLayout
+  title="Gotalk: the forum-first community platform"
+  description={site.description}
+  jsonLd={[organizationJsonLd(), websiteJsonLd()]}
+>
+  <section class="hero">
+    <div class="container hero-copy">
+      <p class="eyebrow">
+        <span class="badge">Beta</span> Free and open source
+      </p>
+      <h1 class="display">
+        The <span class="nowrap">forum-first</span> community platform you can host yourself.
+      </h1>
+      <p class="lede">
+        Gotalk brings forums, chat and voice together, so conversations stay findable and communities stay
+        yours.
+      </p>
+      <div class="actions">
+        <a class="button button-primary" href={links.downloads}>
+          <Icon name="download" />
+          Download Gotalk
+        </a>
+        <a class="button button-secondary" href={site.appUrl}>
+          Open the web app
+        </a>
+      </div>
+      <p class="small mute">Windows, macOS, Linux and the web today. Mobile apps are on the way.</p>
+    </div>
+    <div class="container hero-shot">
+      <Screenshot
+        src={forumTopic}
+        priority
+        alt="A Gotalk forum topic: a woodworking question with an accepted solution highlighted in green, and a reply being drafted in the Markdown composer."
+      />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="pillars-title">
+    <div class="container">
+      <h2 id="pillars-title" class="visually-hidden">
+        Why Gotalk
+      </h2>
+      <ul class="grid-3 pillars" role="list">
+        {pillars.map((p) => (
+          <li class="card">
+            <h3 class="heading-sm">{p.title}</h3>
+            <p class="mute">{p.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="realtime-title">
+    <div class="container stack">
+      <div class="intro">
+        <h2 id="realtime-title" class="title">
+          Chat and voice, next door
+        </h2>
+        <p class="lede">
+          Every place can have chat channels with threads and pins, direct and group messages, and voice rooms
+          with screen sharing. Real-time, but never at the expense of the forum.
+        </p>
+      </div>
+      <div class="grid-2">
+        <figure>
+          <Screenshot
+            src={chat}
+            sizes="(min-width: 1240px) 588px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 32px)"
+            alt="A Gotalk chat channel with messages, reactions, a reply and a thread, and the member list showing who is online."
+          />
+          <figcaption class="small mute">Channels with threads, reactions and presence.</figcaption>
+        </figure>
+        <figure>
+          <Screenshot
+            src={voice}
+            sizes="(min-width: 1240px) 588px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 32px)"
+            alt="A Gotalk voice call with four participants and a shared screen."
+          />
+          <figcaption class="small mute">
+            Voice and video, with screen sharing and moderator controls.
+          </figcaption>
+        </figure>
+      </div>
+      <p>
+        <a class="more" href="/features">
+          See every feature <Icon name="arrow-right" />
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="servers-title">
+    <div class="container split">
+      <div class="split-copy">
+        <h2 id="servers-title" class="title">
+          Connect to any Gotalk server
+        </h2>
+        <p class="lede">
+          Type an address and go. Each server keeps its own accounts, and the app keeps a separate session for
+          each one you add.
+        </p>
+        <p class="mute">
+          Not ready to host? Start on Gotalk Official at <code>{site.officialInstance}</code>, open to
+          everyone.
+        </p>
+      </div>
+      <Screenshot
+        src={welcome}
+        sizes="(min-width: 1240px) 640px, (min-width: 900px) 55vw, calc(100vw - 32px)"
+        alt="The Gotalk welcome screen offering Gotalk Official or the address of another server."
+      />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="host-title">
+    <div class="container split reverse">
+      <div class="split-copy">
+        <h2 id="host-title" class="title">
+          Yours to host
+        </h2>
+        <p class="lede">
+          One Go binary or one Compose file. You need PostgreSQL; Redis and LiveKit are optional. A setup
+          wizard checks your environment, then walks you through storage, email and voice.
+        </p>
+        <pre class="code"><code><span class="comment"># in a checkout of gotalk-server</span>
+docker compose up -d
+docker compose logs gotalk  <span class="comment"># open the setup link it prints</span></code></pre>
+        <div class="actions">
+          <a class="button button-secondary" href={links.serverGettingStarted}>
+            Getting started
+            <Icon name="external" size={14} />
+          </a>
+          <a class="button button-secondary" href={links.deployment}>
+            Deploy on Kubernetes
+            <Icon name="external" size={14} />
+          </a>
+        </div>
+      </div>
+      <Screenshot
+        src={serverSettings}
+        sizes="(min-width: 1240px) 640px, (min-width: 900px) 55vw, calc(100vw - 32px)"
+        alt="Gotalk's server settings page showing live health checks for the database, Redis, storage and email."
+      />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="open-title">
+    <div class="container prose-column">
+      <h2 id="open-title" class="title">
+        Open by design
+      </h2>
+      <p class="lede">
+        The server is AGPL-3.0 and the app is MIT. Read the code, run your own, and build bots and
+        integrations on the documented OpenAPI API.
+      </p>
+      <div class="actions">
+        <a class="button button-secondary" href={repos.server}>
+          <Icon name="github" />
+          View on GitHub
+        </a>
+        <a class="button button-secondary" href="/open-source">
+          Licenses and repositories
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section closing" aria-labelledby="start-title">
+    <div class="container prose-column center">
+      <h2 id="start-title" class="title">
+        Start in a few minutes
+      </h2>
+      <div class="actions">
+        <a class="button button-primary" href={links.downloads}>
+          <Icon name="download" />
+          Download Gotalk
+        </a>
+        <a class="button button-secondary" href={links.serverGettingStarted}>
+          Host your own server
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    padding-block: 96px 64px;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -200px -10% auto;
+    height: 720px;
+    /* The brand glow from DESIGN.md as a radial wash; the token only ships it as a linear gradient. */
+    background: radial-gradient(closest-side, rgba(255, 87, 87, 0.16), rgba(255, 87, 87, 0));
+    pointer-events: none;
+  }
+
+  .hero-copy {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--gt-space-xl);
+    text-align: center;
+  }
+
+  .hero-copy .display {
+    max-width: 16ch;
+  }
+
+  .hero-copy .lede {
+    max-width: 52ch;
+  }
+
+  .hero-copy .actions {
+    justify-content: center;
+  }
+
+  .hero-shot {
+    position: relative;
+    margin-top: 64px;
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      padding-block: 64px 48px;
+    }
+
+    .hero-shot {
+      margin-top: 40px;
+    }
+  }
+
+  .pillars {
+    list-style: none;
+    padding: 0;
+  }
+
+  .pillars .card {
+    display: grid;
+    gap: var(--gt-space-sm);
+    align-content: start;
+  }
+
+  .stack {
+    display: grid;
+    gap: 48px;
+  }
+
+  .intro {
+    display: grid;
+    gap: var(--gt-space-lg);
+  }
+
+  figure {
+    display: grid;
+    gap: var(--gt-space-md);
+  }
+
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gt-space-sm);
+    font-weight: 500;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 64px;
+    align-items: center;
+  }
+
+  .split.reverse {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+
+  .split.reverse .split-copy {
+    order: 2;
+  }
+
+  .split-copy {
+    display: grid;
+    gap: var(--gt-space-lg);
+    align-content: start;
+  }
+
+  @media (max-width: 900px) {
+    .split,
+    .split.reverse {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 40px;
+    }
+
+    .split.reverse .split-copy {
+      order: 0;
+    }
+  }
+
+  .center .actions {
+    justify-content: center;
+  }
+
+  .closing {
+    background: radial-gradient(60% 120% at 50% 100%, rgba(255, 87, 87, 0.1), rgba(255, 87, 87, 0));
+  }
+</style>
