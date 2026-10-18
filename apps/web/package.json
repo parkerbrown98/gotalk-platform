@@ -1,0 +1,26 @@
+{
+  "name": "@gotalk-platform/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "start": "node dist/server/entry.mjs",
+    "capture:screens": "node scripts/capture-screens.mjs",
+    "build:brand": "node scripts/build-brand.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.8",
+    "@astrojs/sitemap": "^3.7.4",
+    "@gotalk/tokens": "github:parkerbrown98/gotalk-client#2eab567db7af7824a6f93be3ef8b08150c10f54a&path:/packages/tokens",
+    "astro": "^7.4.0",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "playwright": "^1.64.1",
+    "typescript": "~6.0.3"
+  }
+}

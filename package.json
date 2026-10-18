@@ -1,0 +1,31 @@
+{
+  "name": "gotalk-platform",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @gotalk-platform/web dev",
+    "build": "pnpm --filter @gotalk-platform/web build",
+    "preview": "pnpm --filter @gotalk-platform/web preview",
+    "check": "pnpm --filter @gotalk-platform/web check",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:links": "node scripts/check-links.mjs apps/web/dist/client",
+    "verify": "pnpm format:check && pnpm lint && pnpm check && pnpm build && pnpm check:links"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "globals": "^17.0.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2"
+  }
+}
