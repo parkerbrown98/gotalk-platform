@@ -1,0 +1,179 @@
+---
+import Icon from './Icon.astro';
+import { publicPath } from '../lib/seo';
+import { links, nav, site } from '../lib/site';
+
+const current = publicPath(Astro.url.pathname);
+const isExternal = (href: string) => href.startsWith('http');
+---
+
+<header class="site-header">
+  <div class="container bar">
+    <a class="logo" href="/" aria-label={`${site.name} home`}>
+      <img src="/brand/glyph.svg" alt="" width="26" height="27" />
+      <span>{site.name}</span>
+    </a>
+
+    <nav class="nav-desktop" aria-label="Main">
+      <ul>
+        {nav.map((item) => (
+          <li>
+            <a href={item.href} aria-current={item.href === current ? 'page' : undefined}>
+              {item.label}
+              {isExternal(item.href) && <Icon name="external" size={12} />}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <a class="button button-secondary button-small" href={site.appUrl}>
+        Open web app
+      </a>
+      <a class="button button-primary button-small" href={links.downloads}>
+        Download
+      </a>
+    </div>
+
+    <details class="menu">
+      <summary class="button button-secondary button-small">
+        <Icon name="menu" />
+        <span>Menu</span>
+      </summary>
+      <nav aria-label="Main">
+        <ul>
+          {nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={item.href === current ? 'page' : undefined}>
+                {item.label}
+                {isExternal(item.href) && <Icon name="external" size={12} />}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div class="menu-actions">
+          <a class="button button-primary" href={links.downloads}>
+            Download
+          </a>
+          <a class="button button-secondary" href={site.appUrl}>
+            Open web app
+          </a>
+        </div>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(14, 15, 17, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--gt-space-xl);
+    min-height: var(--gt-size-nav-height);
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--gt-color-ink);
+    font-weight: 600;
+    font-size: 17px;
+    text-decoration: none;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-desktop ul {
+    display: flex;
+    gap: var(--gt-space-xs);
+  }
+
+  nav li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border-radius: var(--gt-radius-sm);
+    color: var(--gt-color-mute);
+    font-size: var(--gt-type-body-sm-size);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  nav li a:hover,
+  nav li a[aria-current='page'] {
+    color: var(--gt-color-ink);
+  }
+
+  nav li a[aria-current='page'] {
+    background: var(--gt-color-surface-elevated);
+  }
+
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: var(--gt-space-sm);
+  }
+
+  .menu {
+    display: none;
+    margin-left: auto;
+  }
+
+  .menu summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    padding: var(--gt-space-lg);
+    background: var(--gt-color-surface);
+    border-bottom: 1px solid var(--gt-color-hairline);
+  }
+
+  .menu nav li a {
+    display: flex;
+    padding: 12px;
+    font-size: var(--gt-type-body-md-size);
+  }
+
+  .menu-actions {
+    display: grid;
+    gap: var(--gt-space-sm);
+    margin-top: var(--gt-space-md);
+  }
+
+  @media (max-width: 768px) {
+    .nav-desktop,
+    .header-actions {
+      display: none;
+    }
+
+    .menu {
+      display: block;
+    }
+  }
+</style>

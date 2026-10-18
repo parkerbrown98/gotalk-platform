@@ -1,0 +1,136 @@
+---
+import { links, repos, site } from '../lib/site';
+
+const columns = [
+  {
+    title: 'Product',
+    items: [
+      { href: '/features', label: 'Features' },
+      { href: links.downloads, label: 'Desktop downloads' },
+      { href: site.appUrl, label: 'Web app' },
+    ],
+  },
+  {
+    title: 'Self-host',
+    items: [
+      { href: links.serverGettingStarted, label: 'Getting started' },
+      { href: links.deployment, label: 'Deployment' },
+      { href: links.configuration, label: 'Configuration' },
+      { href: links.serverReleases, label: 'Server releases' },
+    ],
+  },
+  {
+    title: 'Open source',
+    items: [
+      { href: '/open-source', label: 'Licenses and repositories' },
+      { href: repos.server, label: 'gotalk-server' },
+      { href: repos.client, label: 'gotalk-client' },
+      { href: repos.gateway, label: 'gotalk-gateway' },
+    ],
+  },
+];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="top">
+      <div class="about">
+        <a class="logo" href="/">
+          <img src="/brand/glyph.svg" alt="" width="22" height="23" />
+          <span>{site.name}</span>
+        </a>
+        <p class="small mute">
+          Forums, chat and voice for communities you run yourself. Free and open source.
+        </p>
+      </div>
+      {columns.map((col) => (
+        <nav aria-label={col.title}>
+          <h2 class="col-title">{col.title}</h2>
+          <ul>
+            {col.items.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))}
+    </div>
+    <p class="bottom small mute">
+      The server and push gateway are licensed under the GNU AGPL-3.0, the client under MIT.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--gt-color-hairline);
+    background: var(--gt-color-surface);
+    padding-block: 56px 40px;
+  }
+
+  .top {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+    gap: var(--gt-space-xxl);
+  }
+
+  .about {
+    display: grid;
+    gap: var(--gt-space-md);
+    align-content: start;
+    max-width: 32ch;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--gt-color-ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .col-title {
+    font-size: var(--gt-type-caption-md-size);
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: var(--gt-color-mute);
+    margin-bottom: var(--gt-space-md);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--gt-space-sm);
+  }
+
+  li a {
+    font-size: var(--gt-type-body-sm-size);
+    color: var(--gt-color-body);
+    text-decoration: none;
+  }
+
+  li a:hover {
+    color: var(--gt-color-ink);
+    text-decoration: underline;
+  }
+
+  .bottom {
+    margin-top: 48px;
+    padding-top: var(--gt-space-xl);
+    border-top: 1px solid var(--gt-color-hairline);
+  }
+
+  @media (max-width: 900px) {
+    .top {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .about {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
