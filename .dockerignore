@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/.astro
+.git
+.github
+docs
+lighthouse
+.DS_Store
+apps/web/src/styles/generated
