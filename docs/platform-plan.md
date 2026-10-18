@@ -124,7 +124,7 @@ data-access module, switching frameworks later would not touch the indexer or th
 | Database | PostgreSQL | Index store, crawl state, sitemap source. Postgres full-text search for directory search. |
 | Queries and migrations | Drizzle ORM and `drizzle-kit` migrations | Type-safe, SQL-first, light. |
 | Job scheduling | `pg-boss` (Postgres-backed) | Retries, backoff and scheduling with no extra infrastructure, the same reasoning as `river` in the gateway. |
-| Styling | `@gotalk/tokens` `dist/tokens.css` (`--gt-*` variables), Inter, plain CSS | The tokens package already exports CSS variables "for non-React surfaces, including server-rendered pages". |
+| Styling | `@gotalk/tokens` (`--gt-*` variables, generated at build time from the package), Inter through Astro's fonts API, plain CSS | One source of design tokens for the app and the site. The package is a pinned git dependency until it is published to npm; see [Development](development.md#design-tokens). |
 | Markdown | `markdown-it` or `remark` with a strict sanitizer | Post bodies are user Markdown and must be rendered and sanitized on our side. |
 | Cache | CDN in front, plus HTTP caching headers. Optional Redis later | Pages are cacheable by URL. No Redis needed at launch. |
 | Observability | Structured logs, Prometheus metrics from the indexer, Search Console and CDN analytics | Crawl health and index freshness are the main signals. |
@@ -448,20 +448,31 @@ deferred. See the checklist after the table.
 Done when the protocol and work breakdown are signed off and legal input has been received and reflected in the
 policies. The product and technical decisions are done.
 
-### Phase 1 — Repo foundation and landing page ⬜
+### Phase 1 — Repo foundation and landing page 🟨
 
-- Scaffold `gotalk-platform`: pnpm workspace, `apps/web` (Astro), TypeScript, lint, format, CI (type-check,
-  build, link check).
-- Consume `@gotalk/tokens` for `--gt-*` variables, Inter, base layout, header and footer, responsive down to
-  390 px.
-- Build `/`, `/features`, `/open-source` with real copy and product visuals from the client mockups.
-- Metadata, OpenGraph defaults, favicon set, `robots.txt`, a basic sitemap, `WebSite` and `Organization`
-  structured data.
-- Accessibility pass: keyboard, contrast, focus states, reduced motion.
-- Deploy to a staging host behind the CDN.
+Status: built and verified locally; the only open item is the staging deployment, which needs the hosting
+accounts. See [Development](development.md) and [Deployment](deployment.md).
+
+- ✅ Scaffold `gotalk-platform`: pnpm workspace, `apps/web` (Astro 7 with the Node adapter), TypeScript, ESLint
+  with `jsx-a11y` rules, Prettier, CI (format, lint, type-check, build, link check, container image build).
+- ✅ Consume `@gotalk/tokens` for `--gt-*` variables, Inter, base layout, header and footer, responsive down to
+  390 px. The package is a git dependency pinned to a client commit until it is published to npm; an Astro
+  integration generates the stylesheet from the package's own `toCss(theme)` at build time.
+- ✅ Build `/`, `/features`, `/open-source` with real copy and product visuals from the client mockups. The
+  screenshots are captured by a script and served as AVIF and WebP. Download buttons go to the client's GitHub
+  releases until `/download` exists (Phase 2); releases are pre-releases, so the copy says Gotalk is in beta.
+- ✅ Metadata, OpenGraph defaults, favicon set, `robots.txt` (with the AI crawler policy), a basic sitemap,
+  `llms.txt`, `WebSite` and `Organization` structured data, a strict same-origin Content Security Policy, and a
+  `PUBLIC_NOINDEX` switch for staging builds.
+- ✅ Accessibility pass: skip link, keyboard order and focus states checked in Chromium, the mobile menu works
+  without JavaScript, contrast fixed in the open menu, reduced motion honored.
+- ⬜ Deploy to a staging host behind the CDN. The container image, health check, Cloudflare settings and staging
+  build are ready ([Deployment](deployment.md)); choosing the VPS or Fly.io and creating the accounts is left.
 
 Done when `gotalk.sh` can launch as a polished landing page with accurate content and passing Lighthouse
-scores (performance, accessibility, best practices, SEO at 95 or above).
+scores (performance, accessibility, best practices, SEO at 95 or above). Lighthouse 13 against the production
+build scores 99 to 100 in all four categories on every page, mobile and desktop, with mobile LCP under 2 s and
+no layout shift.
 
 ### Phase 2 — Downloads and self-host ⬜
 

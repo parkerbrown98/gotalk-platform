@@ -5,11 +5,19 @@ Documentation for `gotalk-platform`, the marketing and public-index website serv
 
 ## On this page
 
+- [Build and run](#build-and-run)
 - [Project planning](#project-planning)
 - [Specifications](#specifications)
 - [Brand and copy](#brand-and-copy)
 - [Policies (drafts)](#policies-drafts)
 - [Related projects](#related-projects)
+
+## Build and run
+
+| Page | What's in it |
+|---|---|
+| [Development](development.md) | Layout, design tokens, screenshots and brand assets, SEO and crawlers, checks |
+| [Deployment](deployment.md) | Container image, configuration, Cloudflare settings, staging |
 
 ## Project planning
 

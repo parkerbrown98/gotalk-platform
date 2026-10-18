@@ -75,21 +75,23 @@ Keep copy tied to what the repos document today. Re-check this list before launc
 
 ## Brand assets
 
-Reuse the set in the client repo's `docs/brand`. Copy the files into `apps/web/public` in Phase 1, rather than
-referencing the other repo. Do not edit the originals. If the brand changes, change it in the client repo first.
+Reuse the set in the client repo's `docs/brand`. The `build:brand` script copies and rasterizes the files into
+`apps/web/public` (see [Development](development.md#brand-assets)) rather than referencing the other repo. Do not
+edit the originals. If the brand changes, change it in the client repo first.
 
 | File (client `docs/brand`) | Use here |
 |---|---|
-| `glyph.svg` | Header logo mark, social avatar |
-| `icon.svg`, `icon-square.svg` | Large mark on `/` and `/download`, open graph fallback |
-| `icon-macos.svg` | macOS download button and card |
-| `favicon.svg` | Favicon. Generate PNG and `.ico` fallbacks and an `apple-touch-icon` from it |
-| `banner.svg` | Source for the default open graph image (rasterize to 1200 by 630) |
+| `glyph.svg` | Header and footer logo mark, social image |
+| `icon.svg`, `icon-square.svg` | Manifest icons (`icon-square.svg` for the Apple touch icon and the maskable icon) |
+| `icon-macos.svg` | macOS download button and card (Phase 2) |
+| `favicon.svg` | Favicon, plus the `.ico` fallback (16, 32 and 48 px) |
+| `banner.svg` | Not used: it lists iOS and Android, which the site does not claim yet. The default social image is rendered from the headline instead |
 | `android-*.svg` | Not used on the site |
 
-Needed and not yet existing: a wordmark lockup for the header (glyph plus "gotalk" in Inter), a
-1200 by 630 open graph template for index pages, and platform icons for the download page (Apple, Windows,
-Linux, Docker). Use a permissively licensed icon set for platform logos and follow each owner's brand rules.
+Done in Phase 1: the header lockup (glyph plus "Gotalk" set in Inter as text) and the default 1200 by 630 social
+image. Still needed: an open graph template for index pages, and platform icons for the download page (Apple,
+Windows, Linux, Docker). Use a permissively licensed icon set for platform logos and follow each owner's brand
+rules.
 
 ## Visual system
 
