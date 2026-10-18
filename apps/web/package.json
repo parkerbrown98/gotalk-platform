@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run --project unit",
+    "test:site": "vitest run --project site",
     "start": "node dist/server/entry.mjs",
     "capture:screens": "node scripts/capture-screens.mjs",
     "build:brand": "node scripts/build-brand.mjs"
