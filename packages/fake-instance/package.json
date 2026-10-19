@@ -1,0 +1,29 @@
+{
+  "name": "@gotalk-platform/fake-instance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A fake Gotalk instance that serves the index protocol's instance side, with failure modes",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "gotalk-fake-instance": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "start": "node src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gotalk-platform/index-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
