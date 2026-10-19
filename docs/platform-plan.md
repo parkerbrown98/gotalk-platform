@@ -522,9 +522,11 @@ Deliverables (see [Deployment](deployment.md#release-data) and [Development](dev
 - Note for the client repo: its release body ("See the assets below…") reads oddly on `/changelog`. Generated
   notes, as the server uses, would fit better.
 
-### Phase 3 — Opt-in support in server and client ⬜
+### Phase 3 — Opt-in support in server and client ✅
 
-Work in other repos, driven by the Phase 0 spec.
+Work in other repos, driven by the Phase 0 spec. Done: see the
+[work breakdown](phase-3-work-breakdown.md) for implementation notes and the acceptance checklist. The legal
+clause is still pending, as in Phase 0, and listing must not be used for real content until it exists.
 
 - Server: `directory` well-known block, instance config section, `indexable` flags, change feed, ping,
   per-user exclusion, policy text.
@@ -533,6 +535,18 @@ Work in other repos, driven by the Phase 0 spec.
 
 Done when a locally run instance can opt in, mark a place indexable, and emit the feed, including deletes, with
 tests in the server repo.
+
+Deliverables:
+
+- ✅ Server: migration `00009_index.sql`, the `directory` settings section and keys, `indexable` flags on places
+  and boards, `exclude_from_index`, the well-known `directory` block, `/api/v1/index/*` with ETags and its own
+  rate-limit tier, the change feed with coalescing, 30-day retention and `cursor_expired`, debounced signed
+  pings, notices and suggested policy text. Integration tests validate every response against this repo's
+  schemas. Documented in the server's [Public index](https://github.com/parkerbrown98/gotalk-server/blob/main/docs/api-index.md) page.
+- ✅ Client: place and topic deep links (web, `gotalk://`, desktop), the instance's "Public directory" settings,
+  place, board and account toggles, and the member notice and indicator.
+- ✅ This repo: [`packages/index-protocol`](../packages/index-protocol/README.md) (schemas, fixtures, signing vector)
+  and [`packages/fake-instance`](../packages/fake-instance/README.md), checked in CI.
 
 ### Phase 4 — Indexer ⬜
 

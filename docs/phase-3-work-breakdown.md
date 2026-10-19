@@ -1,8 +1,9 @@
 # Phase 3 work breakdown: server and client
 
-**Status: proposal, for review.** This turns the [index protocol](index-protocol.md) into concrete work for the
-two other repos, so Phase 3 of the [platform plan](platform-plan.md#phase-3--opt-in-support-in-server-and-client-)
-can be scheduled. Nothing here is implemented.
+**Status: implemented.** This turns the [index protocol](index-protocol.md) into concrete work for the two other
+repos, for Phase 3 of the [platform plan](platform-plan.md#phase-3--opt-in-support-in-server-and-client-). The
+server side is documented in its [Public index](https://github.com/parkerbrown98/gotalk-server/blob/main/docs/api-index.md)
+page. Where the implementation settled something this page left open, the notes under each section say so.
 
 The platform's own work (indexer, pages) does not depend on this being finished. It builds against the
 fixtures and fake instance described in the protocol, so the three streams can run in parallel.
@@ -115,6 +116,39 @@ transaction, in batches if there are many.
 - A new `api-index.md` page, additions to `configuration.md`, `api-instance.md`, `api-places.md` and
   `api-reference.md`, and an update to the "SEO rendering" line in the backend plan to point at the platform.
 
+### Server implementation notes
+
+Done in `gotalk-server` (migration `00009_index.sql`, `internal/service/index.go`, `directory.go`, `indexping.go`,
+`internal/api/handlers_index.go`). Where it differs from or settles the tasks above:
+
+- **Feed table.** `index_changes` holds one row per object (primary key on object type and ID), so a new event
+  replaces the earlier one. That is the coalescing. `seq` is assigned when the feed is read, under a row lock and
+  only to committed rows, so `seq` order is commit order and a reader never skips an event that commits late. The
+  high-water mark and the pruned mark live in `instance_settings`. A cursor below the pruned mark, or above the
+  high-water mark, gets `410 cursor_expired`.
+- **Derived state.** `places.in_index` and `boards.in_index` record what is in the index right now. Every change
+  that can affect indexability recomputes them and emits events for the difference. That covers fan-out (role
+  and overwrite changes, a place made private, listing on or off) without a separate code path per cause. Events
+  are only emitted for objects that are, or were, in the index, so the feed never names private content.
+  `topics.index_updated_at` is the `updated_at` the index sees.
+- **Settings.** The `directory` section holds `listed`, `contact_email`, `platform_url`, `pings_disabled` and a
+  write-only `signing_key`. Without a configured key, one is generated and stored in the database. Rotation is
+  `POST /instance/directory/keys/rotate` (the old key stays published) and `DELETE /instance/directory/keys/previous`.
+  Instance-level and per-person changes go to a new instance audit log (`GET /instance/audit-log`); place and board
+  changes go to the place's audit log.
+- **Listing off.** The well-known block is omitted, `GET /index/places` is empty, and the other endpoints answer
+  `404`. Every indexed place also gets a `place.delete`.
+- **Exclusion.** `user.exclude` comes with `topic.delete` for each indexed topic the person opened. A display name
+  change re-announces their topics with `topic.upsert`, since authors' names are shown.
+- **Notices.** Places, boards and the account carry `index_notice`. `GET /instance/directory` returns the operator
+  notice, `license_pending: true` and suggested policy sections with the license clause as a placeholder. Nothing
+  is published automatically.
+- **Errors.** Problems use `type: https://gotalk.sh/problems/{code}` and `code`. Cursors the instance did not issue
+  get `400 invalid_cursor`; other malformed parameters get `400 invalid_parameter`.
+- **Tests.** Responses are validated against this repo's schemas (copied to the server's
+  `internal/api/testdata/index-protocol`), every fixture is validated with the Go validator too, and the ping
+  signature reproduces `signing-vector.json`.
+
 ## gotalk-client
 
 ### C1. `app.gotalk.sh` is not indexed ✅
@@ -158,6 +192,10 @@ client's existing "reading without an account" behavior applies.
 - First-time notice when a member joins an indexable place, and a persistent indicator on indexable places
   ("Public: visible to search engines").
 
+Implemented: see the client's [search and directory](https://github.com/parkerbrown98/gotalk-client/blob/main/docs/search-and-directory.md)
+page. A `?instance=` place link goes through `/explore/places/{slug}` when the visitor is not signed in on that
+instance, and the desktop shell gained deep-link handling (`tauri-plugin-deep-link`), which it did not have before.
+
 ### C4. Tests and docs
 
 - Unit tests for link building and parsing in `@gotalk/core`. Component tests for the settings.
@@ -167,10 +205,12 @@ client's existing "reading without an account" behavior applies.
 
 For completeness, the platform's side of Phase 3 is:
 
-- `packages/index-protocol`: schemas and fixtures.
-- `packages/fake-instance`: a server implementing the instance side from the fixtures, including the failure
-  cases (expired cursors, hostile responses, slow responses).
-- CI that checks the fixtures against the schemas.
+- ✅ [`packages/index-protocol`](../packages/index-protocol/README.md): schemas, fixtures, a ping signing vector,
+  and validation and signing helpers.
+- ✅ [`packages/fake-instance`](../packages/fake-instance/README.md): a server implementing the instance side from
+  the fixtures, with mutations that emit feed events and the failure cases (expired cursors, hostile responses,
+  slow responses).
+- ✅ CI type-checks both packages and runs their tests, which check every fixture against its schema.
 
 ## Suggested order
 
@@ -185,15 +225,16 @@ whenever the index launches.
 
 ## Acceptance checklist
 
-- [ ] A local instance can turn listing on, mark a place indexable, and serve `/index/places`,
+- [x] A local instance can turn listing on, mark a place indexable, and serve `/index/places`,
   `/index/boards/{id}/topics`, `/index/topics/{id}`, `/index/changes` that validate against the schemas.
-- [ ] No object is returned by `/index/*` that a signed-out visitor cannot read.
-- [ ] Deleting a post, excluding a user, making a place private and turning listing off each produce the right
+- [x] No object is returned by `/index/*` that a signed-out visitor cannot read.
+- [x] Deleting a post, excluding a user, making a place private and turning listing off each produce the right
   event and remove the object from `/index/*`.
-- [ ] A listed instance's well-known document advertises the `directory` block and nothing else changes for
+- [x] A listed instance's well-known document advertises the `directory` block and nothing else changes for
   instances that do not list.
-- [ ] A signed ping is accepted by the fake platform and is debounced.
+- [x] A signed ping is accepted by the fake platform and is debounced.
 - [x] `app.gotalk.sh` serves `noindex` (in the client repo; verify the header on the live host).
-- [ ] Deep links for places and topics open the right screen, including for an unsaved instance.
-- [ ] Settings for the instance, place, board and account exist, with notices.
+- [x] Deep links for places and topics open the right screen, including for an unsaved instance (web verified;
+  the desktop handler builds but has to be checked from an installed app).
+- [x] Settings for the instance, place, board and account exist, with notices.
 - [ ] The legal clause is in place before listing can be enabled outside development (pending legal input).
