@@ -33,8 +33,16 @@ apps/web/                 Astro site (the only app until the indexer arrives in 
     styles/global.css     Base styles; imports the generated tokens
   test/                   Site test against the built server, and a fake GitHub API
   vitest.config.ts        Test projects: unit (src/**/*.test.ts) and site (test/)
+packages/
+  index-protocol/         Index protocol contract: JSON Schemas, fixtures, signing test vector, validate and sign helpers
+  fake-instance/          A fake Gotalk instance serving the index protocol from the fixtures, with mutations and faults
 scripts/check-links.mjs   Internal link checker for the build output
+tsconfig.base.json        Strict compiler settings shared by packages/*
 ```
+
+The packages ship erasable TypeScript sources, without a build step: Node and Vitest run them directly. See the
+[index-protocol](../packages/index-protocol/README.md) and [fake-instance](../packages/fake-instance/README.md)
+READMEs for how other repos consume them.
 
 Pages are prerendered by default. A route that needs a live server opts out with `export const prerender = false`,
 as the release pages and [healthz.ts](../apps/web/src/pages/healthz.ts) do, and is rendered by the Node adapter.
@@ -128,13 +136,18 @@ Copy follows [brand and copy](brand-and-copy.md). Before adding a claim, check i
 
 ## Checks
 
-`pnpm verify` runs what CI runs: Prettier, ESLint (with `jsx-a11y` rules), `astro check`, the unit tests, the
-build, the link check and the site test. The link check fails on missing files and on `#anchors` that do not
+`pnpm verify` runs what CI runs: Prettier, ESLint (with `jsx-a11y` rules), the packages' type check,
+`astro check`, the unit tests, the build, the link check and the site test. The link check fails on missing files and on `#anchors` that do not
 exist on the target page. External links are not fetched.
 
-- `pnpm test` runs the unit tests (Vitest): the GitHub client against a fake API (ETags, outages, rate limits,
-  timeouts, malformed answers), the cache (backoff, outage fallback, snapshots, restarts), the asset classifier
-  and channels, release-notes sanitizing and webhook signatures.
+- `pnpm test` runs the unit tests (Vitest) of the site and of `packages/*`. For the site: the GitHub client against
+  a fake API (ETags, outages, rate limits, timeouts, malformed answers), the cache (backoff, outage fallback,
+  snapshots, restarts), the asset classifier and channels, release-notes sanitizing and webhook signatures. For
+  `index-protocol`: every fixture against its schema, invalid documents, and the ping signing vector. For
+  `fake-instance`: every response against the schemas and fixtures, pagination, ETags, mutations and their
+  feed events, `cursor_expired`, each failure mode, and signed pings.
+- `pnpm typecheck` runs `tsc --noEmit` in each package. `astro check` covers the site.
+- `pnpm --filter @gotalk-platform/index-protocol check` validates just the fixtures, without Vitest.
 - `pnpm test:site` runs the built server (`pnpm build` first) against the fake GitHub API: the three release pages,
   a signed webhook that brings in a new release without a deploy, an outage, a restart during the outage, and
   every internal link on those pages.

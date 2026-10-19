@@ -1,6 +1,9 @@
 # Gotalk Public Index Protocol
 
-**Status: draft v1, for review before Phase 3.** Nothing here is implemented yet.
+**Status: draft v1, implemented.** `gotalk-server` serves the instance side (its
+[Public index](https://github.com/parkerbrown98/gotalk-server/blob/main/docs/api-index.md) page) and validates it
+against the [conformance fixtures](#conformance-fixtures) in this repo. The indexer (Phase 4) is not built yet, so
+changes are still possible; they need a protocol version note once the index launches.
 
 This document specifies how a Gotalk instance opts in to the public index at `gotalk.sh`, how the index reads
 its public forum content, and how removals propagate. It is the contract between `gotalk-server` (the
@@ -434,12 +437,15 @@ The indexer fetches operator-supplied origins, so it MUST:
 
 ## Errors and rate limits
 
-Errors use RFC 9457 problem details, the same as the server API.
+Errors use RFC 9457 problem details, the same as the server API. The `type` is
+`https://gotalk.sh/problems/{code}`, and instances also send the code as `code`.
 
 | Status | `type` suffix | Where | Meaning |
 |---|---|---|---|
 | 404 | `not_found` | Instance endpoints | Missing or not indexable |
 | 410 | `cursor_expired` | `GET /changes` | The cursor is older than retained history. Run a reconcile |
+| 400 | `invalid_cursor` | Instance endpoints | The cursor was not issued by this instance (or is corrupt). Restart without it |
+| 400 | `invalid_parameter` | Instance endpoints | A malformed parameter, such as `updated_since` |
 | 429 | `rate_limited` | Both | Honor `Retry-After` |
 | 403 | `origin_blocked` | Platform registration | Origin is blocked |
 | 422 | `verification_failed` | Platform registration | The well-known check failed. `detail` names the check |
@@ -477,14 +483,19 @@ Instances SHOULD give `/api/v1/index/*` its own rate-limit tier, keyed per IP, s
 
 ## Conformance fixtures
 
-To keep the three repos aligned, this repo will hold the fixtures that define the contract:
+To keep the three repos aligned, this repo holds the fixtures that define the contract, in
+[`packages/index-protocol`](../packages/index-protocol/README.md) and
+[`packages/fake-instance`](../packages/fake-instance/README.md):
 
-- `packages/index-protocol/schemas/`: JSON Schema for the well-known `directory` block, every endpoint response
-  and every event type.
-- `packages/index-protocol/fixtures/`: example documents, including the edge cases above: a topic whose opening
-  post is excluded, a board moved between places, a `cursor_expired` response, a coalesced feed and an
-  NSFW-skipped place.
-- `packages/fake-instance`: a small server that implements the instance side from the fixtures, used by
+- [`packages/index-protocol/schemas/`](../packages/index-protocol/schemas): JSON Schema (draft 2020-12) for the
+  well-known `directory` block, every endpoint response and every event type, each with a stable `$id` under
+  `https://gotalk.sh/schemas/index/v1/`.
+- [`packages/index-protocol/fixtures/`](../packages/index-protocol/fixtures): example documents, including the
+  edge cases above: a topic whose opening post is excluded, a board moved between places, a `cursor_expired`
+  response, a coalesced feed and an NSFW-skipped place. `manifest.json` names the schema and HTTP status of
+  each, and `signing-vector.json` is a test vector for [ping](#ping) signing.
+- [`packages/fake-instance`](../packages/fake-instance/README.md): a small server that implements the instance
+  side from the fixtures, with mutations that emit feed events and failure modes for hostile origins, used by
   indexer tests and available to `gotalk-server` for contract tests.
 
 `gotalk-server` is expected to validate its responses against the schemas in its own tests.
